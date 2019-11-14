@@ -8,7 +8,7 @@ message Ticket {
     string owner = 3;
     string subject = 4;
     string content = 5;
-    string section = 6;
+    string metadata = 6;
     TicketImportanceLevel ticket_importance_level = 7;
     repeated Message messages = 8;
     TicketStatus status = 9;
@@ -20,8 +20,9 @@ message Message {
     string id = 1;
     string owner = 2;
     string content = 3;
-    string created_at = 4;
-    string updated_at = 5;
+    string metadata = 4;
+    string created_at = 5;
+    string updated_at = 6;
 }
 
 enum TicketImportanceLevel {
