@@ -14,6 +14,7 @@ import (
 type Config struct {
 	Application ApplicationConfig `json:"application"`
 	Logger      LoggerConfig      `json:"logger"`
+	Postgres    PostgresConfig    `json:"postgres"`
 }
 
 // ApplicationConfig encapsulates default application properties.
@@ -44,6 +45,45 @@ func (lc *LoggerConfig) validate() {
 	}
 }
 
+// PostgresConfig encapsulates postgres configuration properties.
+type PostgresConfig struct {
+	Host               string `json:"host"`
+	Port               int    `json:"port"`
+	Name               string `json:"name"`
+	User               string `json:"user"`
+	Password           string `json:"password"`
+	ConnectionTimeout  int    `json:"connection_timeout"`
+	MaxConnection      int    `json:"max_connection"`
+	SSLMode            string `json:"ssl_mode"`
+	MigrationDirectory string `json:"migration_directory"`
+}
+
+func (pc *PostgresConfig) validate() {
+	if pc.Host == "" {
+		pc.Host = "localhost"
+	}
+
+	if pc.Port <= 0 {
+		pc.Port = 5432
+	}
+
+	if pc.Name == "" {
+		pc.Name = "nucleus"
+	}
+
+	if pc.ConnectionTimeout <= 0 {
+		pc.ConnectionTimeout = 10
+	}
+
+	if pc.MaxConnection <= 0 {
+		pc.MaxConnection = 8
+	}
+
+	if pc.SSLMode == "" {
+		pc.SSLMode = "disable"
+	}
+}
+
 // Configure reads a configuration file from provided file path and populates an instance of Config struct.
 func Configure(logger *logging.Logger, filePath string) *Config {
 	logger.Info("loading configurations file from %s", filePath)
@@ -60,6 +100,7 @@ func Configure(logger *logging.Logger, filePath string) *Config {
 
 	config.Application.validate()
 	config.Logger.validate()
+	config.Postgres.validate()
 
 	return config
 }

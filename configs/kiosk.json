@@ -7,5 +7,17 @@
 
     "logger": {
         "level": "debug"
+    },
+
+    "postgres": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "kiosk",
+        "user": "",
+        "password": "",
+        "connection_timeout": 10,
+        "max_connection" : 8,
+        "ssl_mode": "disable",
+        "migration_directory": "file://migration/postgres"
     }
 }
