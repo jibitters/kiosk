@@ -1,0 +1,11 @@
+{
+    "application": {
+        "metrics" : true,
+        "metrics_host" : "localhost",
+        "metrics_port" : 9091
+    },
+
+    "logger": {
+        "level": "debug"
+    }
+}
