@@ -6,6 +6,12 @@ message Id {
     int64 id = 1;
 }
 
+message Page {
+    int32 number = 1;
+    int32 size = 2;
+    bool has_next = 3;
+}
+
 message Ticket {
     int64 id = 1;
     string issuer = 2;
