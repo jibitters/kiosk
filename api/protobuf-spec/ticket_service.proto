@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "g/rpc/kiosk";
+
+import "models.proto";
+import "google/protobuf/empty.proto";
+
+service TicketService {
+    rpc create(Ticket) returns (google.protobuf.Empty) {}
+    rpc read(ReadTicketRequest) returns (Ticket) {}
+    rpc update(Ticket) returns (google.protobuf.Empty) {}
+    rpc delete(DeleteTicketRequest) returns (google.protobuf.Empty) {}
+    rpc list(ListTicketsRequest) returns (ListTicketsResponse) {}
+}
+
+message ReadTicketRequest {
+    string id = 1;
+}
+
+message DeleteTicketRequest {
+    string id = 1;
+}
+
+message ListTicketsRequest {
+    string owner = 1;
+    int32 page_number = 2;
+    int32 page_size = 3;
+}
+
+message ListTicketsResponse {
+    repeated Ticket tickets = 1;
+}
