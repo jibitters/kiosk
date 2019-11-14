@@ -4,7 +4,7 @@
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ models.proto
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ echo_service.proto
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ ticket_service.proto
-//go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ message_service.proto
+//go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ comment_service.proto
 package main
 
 import (
