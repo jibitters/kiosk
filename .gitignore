@@ -1,0 +1,25 @@
+# MacOS files
+.DS_Store
+
+# IDEA files
+*.iml
+.idea/**
+
+# VS code
+.vscode
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+/kiosk*
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# gRPC generated code
+g/
