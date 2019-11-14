@@ -19,5 +19,10 @@
         "max_connection" : 8,
         "ssl_mode": "disable",
         "migration_directory": "file://migration/postgres"
+    },
+
+    "grpc": {
+        "host": "localhost",
+        "port": 9090
     }
 }
