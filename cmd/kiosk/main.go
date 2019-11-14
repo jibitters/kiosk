@@ -9,13 +9,31 @@ package main
 
 import (
 	"flag"
+
+	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
+	"github.com/jibitters/kiosk/internal/pkg/logging"
 )
 
 // Command line options to parse.
 var (
-	config = flag.String("config", "./configs/orbital.json", "JSON configuration file path.")
+	config = flag.String("config", "./configs/kiosk.json", "JSON configuration file path.")
 )
+
+// The kiosk application definition.
+type kiosk struct {
+	config *configuration.Config
+	logger *logging.Logger
+}
 
 func main() {
 	flag.Parse()
+
+	kiosk := &kiosk{config: &configuration.Config{}, logger: logging.New(logging.InfoLevel)}
+	kiosk.configure()
+}
+
+// Configures kiosk application instance based on provided configuration properties.
+func (k *kiosk) configure() {
+	k.config = configuration.Configure(k.logger, *config)
+	k.logger = logging.NewWithLevel(k.config.Logger.Level)
 }
