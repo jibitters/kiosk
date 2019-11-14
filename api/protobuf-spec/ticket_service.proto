@@ -15,8 +15,7 @@ service TicketService {
 
 message ListTicketsRequest {
     string owner = 1;
-    int32 page_number = 2;
-    int32 page_size = 3;
+    Page page = 2;
 }
 
 message ListTicketsResponse {

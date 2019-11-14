@@ -25,7 +25,7 @@ CREATE TABLE comments (
 );
 
 -- Ticket and its related comments table definition.
-CREATE TABLE ticket_comments (
+CREATE TABLE tickets_comments (
     ticket_id                          REFERENCES tickets,
     comment_id                         REFERENCES comments,
     PRIMARY KEY  (ticket_id, comment_id)

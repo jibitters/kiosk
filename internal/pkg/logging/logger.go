@@ -1,5 +1,5 @@
 // Copyright 2019 The Jibit Team. All rights reserved.
-// Use of this source code is governed by a Apache-style license that can be found in the LICENSE.md file.
+// Use of this source code is governed by an Apache Style license that can be found in the LICENSE.md file.
 
 // Package logging contains some utility functions related to logging.
 package logging
