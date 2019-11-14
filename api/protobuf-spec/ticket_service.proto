@@ -7,18 +7,10 @@ import "google/protobuf/empty.proto";
 
 service TicketService {
     rpc create(Ticket) returns (google.protobuf.Empty) {}
-    rpc read(ReadTicketRequest) returns (Ticket) {}
+    rpc read(Id) returns (Ticket) {}
     rpc update(Ticket) returns (google.protobuf.Empty) {}
-    rpc delete(DeleteTicketRequest) returns (google.protobuf.Empty) {}
+    rpc delete(Id) returns (google.protobuf.Empty) {}
     rpc list(ListTicketsRequest) returns (ListTicketsResponse) {}
-}
-
-message ReadTicketRequest {
-    string id = 1;
-}
-
-message DeleteTicketRequest {
-    string id = 1;
 }
 
 message ListTicketsRequest {
