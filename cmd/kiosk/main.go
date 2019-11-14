@@ -76,7 +76,7 @@ func (k *kiosk) connectToDatabase() {
 
 // Listens on provided host and port to provide a series of gRPC services.
 func (k *kiosk) listen() {
-	server, err := server.Listen(k.config)
+	server, err := server.Listen(k.config, k.logger, k.db)
 	if err != nil {
 		k.stop()
 		k.logger.Fatal("failed to start gRPC server: %v", err)

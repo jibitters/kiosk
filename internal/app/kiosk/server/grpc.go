@@ -8,16 +8,18 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/app/kiosk/metrics"
 	"github.com/jibitters/kiosk/internal/app/kiosk/services"
+	"github.com/jibitters/kiosk/internal/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 )
 
 // Listen creates a new gRPC server and listens on provided host and port.
-func Listen(config *configuration.Config) (*grpc.Server, error) {
+func Listen(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool) (*grpc.Server, error) {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.GRPC.Host, config.GRPC.Port))
 	if err != nil {
 		return nil, err
@@ -25,6 +27,7 @@ func Listen(config *configuration.Config) (*grpc.Server, error) {
 
 	server := server(config)
 	rpc.RegisterEchoServiceServer(server, services.NewEchoService())
+	rpc.RegisterTicketServiceServer(server, services.NewTicketService(logger, db))
 
 	if config.Application.Metrics {
 		go enableMetricsEndpoint(config.Application.MetricsHost, config.Application.MetricsPort)
