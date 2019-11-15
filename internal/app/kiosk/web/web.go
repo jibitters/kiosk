@@ -40,6 +40,7 @@ func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool
 
 	router.POST(version+"/tickets", handler.createTicket)
 	router.GET(version+"/tickets/:id", handler.readTicket)
+	router.PUT(version+"/tickets", handler.updateTicket)
 
 	go fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", config.WEB.Host, config.WEB.Port), router.Handler)
 	return nil
@@ -103,6 +104,26 @@ func (h *handler) readTicket(context *fasthttp.RequestCtx) {
 	}
 
 	response, err := h.ticketService.Read(context, &rpc.Id{Id: int64(id)})
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
+}
+
+func (h *handler) updateTicket(context *fasthttp.RequestCtx) {
+	ticket := &rpc.Ticket{}
+
+	if err := h.unmarshaler.Unmarshal(bytes.NewReader(context.Request.Body()), ticket); err != nil {
+		handleError(err, context)
+		return
+	}
+
+	response, err := h.ticketService.Update(context, ticket)
 	if err != nil {
 		handleError(err, context)
 		return

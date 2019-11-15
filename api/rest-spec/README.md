@@ -36,3 +36,13 @@ The code field and its possible values are described on the following list:
 - read_ticket.not_found
 
 - read_ticket.failed
+
+--
+
+- update_ticket.invalid_id
+
+- update_ticket.invalid_ticket_status
+
+- update_ticket.failed
+
+- update_ticket.not_found

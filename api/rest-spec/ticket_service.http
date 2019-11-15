@@ -47,3 +47,19 @@ GET http://localhost:8080/v1/tickets/10
 #   "issued_at": "2019-11-15T13:20:05.409461Z",
 #   "updated_at": "2019-11-15T13:20:05.409461Z"
 # }
+
+### Update ticket request. Updates an already exists ticket with provided values.
+PUT http://localhost:8080/v1/tickets
+Content-Type: application/json; charset=utf-8
+
+{
+    "id": "10",
+    "ticket_status": "CLOSED"
+}
+
+# Notes
+# ticket_status: Can be RESOLVED, CLOSED or BLOCKED.
+
+# Response
+# HTTP/1.1 200 OK
+# {}
