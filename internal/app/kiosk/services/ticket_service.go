@@ -7,8 +7,10 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
@@ -32,7 +34,7 @@ func NewTicketService(logger *logging.Logger, db *pgxpool.Pool) *TicketService {
 
 // Create creates a new ticket with provided values.
 func (service *TicketService) Create(context context.Context, request *rpc.Ticket) (*empty.Empty, error) {
-	if err := validateCreate(request); err != nil {
+	if err := service.validateCreate(request); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +61,7 @@ func (service *TicketService) Read(context context.Context, request *rpc.Id) (*r
 
 // Update updates a ticket by using the provided values.
 func (service *TicketService) Update(context context.Context, request *rpc.Ticket) (*empty.Empty, error) {
-	if err := validateUpdate(request); err != nil {
+	if err := service.validateUpdate(request); err != nil {
 		return nil, err
 	}
 
@@ -122,6 +124,9 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 	ticket := &rpc.Ticket{}
 	ticketImportanceLevel := ""
 	ticketStatus := ""
+	issuedAt := new(time.Time)
+	updatedAt := new(time.Time)
+
 	row := service.db.QueryRow(context.Background(), query, id)
 	if err := row.Scan(
 		&ticket.Id,
@@ -132,8 +137,8 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 		&ticket.Metadata,
 		&ticketImportanceLevel,
 		&ticketStatus,
-		&ticket.IssuedAt,
-		&ticket.UpdatedAt,
+		issuedAt,
+		updatedAt,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Error(codes.NotFound, "read_ticket.not_found")
@@ -145,8 +150,53 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 
 	ticket.TicketImportanceLevel = rpc.TicketImportanceLevel(rpc.TicketImportanceLevel_value[ticketImportanceLevel])
 	ticket.TicketStatus = rpc.TicketStatus(rpc.TicketStatus_value[ticketStatus])
+	ticket.IssuedAt = issuedAt.Format(time.RFC3339Nano)
+	ticket.UpdatedAt = updatedAt.Format(time.RFC3339Nano)
+
+	if err := service.findTicketComments(ticket); err != nil {
+		return nil, err
+	}
 
 	return ticket, nil
+}
+
+func (service *TicketService) findTicketComments(ticket *rpc.Ticket) error {
+	query := `
+	SELECT (id, owner, content, metadata, created_at, updated_at)
+	FROM comments WHERE comments.ticket_id = $1`
+
+	rows, err := service.db.Query(context.Background(), query, ticket.Id)
+	if err != nil {
+		service.logger.Error("error on finding comments: %v", err)
+		return status.Error(codes.Internal, "read_ticket.failed")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		id := int64(0)
+		owner := ""
+		content := ""
+		metadata := ""
+		createdAt := new(time.Time)
+		updatedAt := new(time.Time)
+
+		err := rows.Scan(&id, &owner, &content, &metadata, createdAt, updatedAt)
+		if err != nil {
+			service.logger.Error("error on scanning rows: %v", err)
+			return status.Error(codes.Internal, "read_ticket.failed")
+		}
+
+		ticket.Comments = append(ticket.Comments, &rpc.Comment{
+			Id:        id,
+			Owner:     owner,
+			Content:   content,
+			Metadata:  metadata,
+			CreatedAt: createdAt.Format(time.RFC3339Nano),
+			UpdatedAt: updatedAt.Format(time.RFC3339Nano),
+		})
+	}
+
+	return nil
 }
 
 func (service *TicketService) updateTicket(ticket *rpc.Ticket) error {
@@ -166,22 +216,25 @@ func (service *TicketService) updateTicket(ticket *rpc.Ticket) error {
 }
 
 func (service *TicketService) deleteTicket(id *rpc.Id) error {
-	query := `DELETE FROM tickets WHERE id=$1`
+	deleteCommentsQuery := `DELETE FROM comments WHERE ticket_id=$1`
+	deleteTicketQuery := `DELETE FROM tickets WHERE id=$1`
 
-	commandTag, err := service.db.Exec(context.Background(), query, id)
-	if err != nil {
+	batch := &pgx.Batch{}
+	batch.Queue("BEGIN")
+	batch.Queue(deleteCommentsQuery, id)
+	batch.Queue(deleteTicketQuery, id)
+	batch.Queue("COMMIT")
+
+	results := service.db.SendBatch(context.Background(), batch)
+	if err := results.Close(); err != nil {
 		service.logger.Error("error on deleting ticket: %v", err)
 		return status.Error(codes.Internal, "delete_ticket.failed")
-	}
-
-	if commandTag.RowsAffected() == 0 {
-		return status.Error(codes.NotFound, "delete_ticket.not_found")
 	}
 
 	return nil
 }
 
-func validateCreate(ticket *rpc.Ticket) error {
+func (service *TicketService) validateCreate(ticket *rpc.Ticket) error {
 	ticket.Issuer = strings.TrimSpace(ticket.Issuer)
 	ticket.Owner = strings.TrimSpace(ticket.Owner)
 	ticket.Subject = strings.TrimSpace(ticket.Subject)
@@ -204,10 +257,14 @@ func validateCreate(ticket *rpc.Ticket) error {
 		return status.Error(codes.InvalidArgument, "create_ticket.empty_content")
 	}
 
+	if ticket.TicketStatus != rpc.TicketStatus_NEW {
+		return status.Error(codes.InvalidArgument, "create_ticket.invalid_status")
+	}
+
 	return nil
 }
 
-func validateUpdate(ticket *rpc.Ticket) error {
+func (service *TicketService) validateUpdate(ticket *rpc.Ticket) error {
 	if ticket.Id < 1 {
 		return status.Error(codes.InvalidArgument, "update_ticket.invalid_id")
 	}
