@@ -117,9 +117,20 @@ func (service *TicketService) insertTicket(ticket *rpc.Ticket) error {
 }
 
 func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
-	query := `
+	findTicketQuery := `
 	SELECT (id, issuer, owner, subject, content, metadata, ticket_importance_level, ticket_status, issued_at, updated_at)
 	FROM tickets WHERE id = $1`
+
+	findCommentsQuery := `
+	SELECT (id, owner, content, metadata, created_at, updated_at)
+	FROM comments WHERE comments.ticket_id = $1`
+
+	batch := &pgx.Batch{}
+	batch.Queue(findTicketQuery, id)
+	batch.Queue(findCommentsQuery, id)
+
+	results := service.db.SendBatch(context.Background(), batch)
+	defer results.Close()
 
 	ticket := &rpc.Ticket{}
 	ticketImportanceLevel := ""
@@ -127,7 +138,7 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 	issuedAt := new(time.Time)
 	updatedAt := new(time.Time)
 
-	row := service.db.QueryRow(context.Background(), query, id)
+	row := results.QueryRow()
 	if err := row.Scan(
 		&ticket.Id,
 		&ticket.Issuer,
@@ -153,22 +164,10 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 	ticket.IssuedAt = issuedAt.Format(time.RFC3339Nano)
 	ticket.UpdatedAt = updatedAt.Format(time.RFC3339Nano)
 
-	if err := service.findTicketComments(ticket); err != nil {
-		return nil, err
-	}
-
-	return ticket, nil
-}
-
-func (service *TicketService) findTicketComments(ticket *rpc.Ticket) error {
-	query := `
-	SELECT (id, owner, content, metadata, created_at, updated_at)
-	FROM comments WHERE comments.ticket_id = $1`
-
-	rows, err := service.db.Query(context.Background(), query, ticket.Id)
+	rows, err := results.Query()
 	if err != nil {
 		service.logger.Error("error on finding comments: %v", err)
-		return status.Error(codes.Internal, "read_ticket.failed")
+		return nil, status.Error(codes.Internal, "read_ticket.failed")
 	}
 	defer rows.Close()
 
@@ -183,7 +182,7 @@ func (service *TicketService) findTicketComments(ticket *rpc.Ticket) error {
 		err := rows.Scan(&id, &owner, &content, &metadata, createdAt, updatedAt)
 		if err != nil {
 			service.logger.Error("error on scanning rows: %v", err)
-			return status.Error(codes.Internal, "read_ticket.failed")
+			return nil, status.Error(codes.Internal, "read_ticket.failed")
 		}
 
 		ticket.Comments = append(ticket.Comments, &rpc.Comment{
@@ -196,7 +195,7 @@ func (service *TicketService) findTicketComments(ticket *rpc.Ticket) error {
 		})
 	}
 
-	return nil
+	return ticket, nil
 }
 
 func (service *TicketService) updateTicket(ticket *rpc.Ticket) error {
@@ -208,7 +207,7 @@ func (service *TicketService) updateTicket(ticket *rpc.Ticket) error {
 		return status.Error(codes.Internal, "update_ticket.failed")
 	}
 
-	if commandTag.RowsAffected() == 0 {
+	if commandTag.RowsAffected() != 1 {
 		return status.Error(codes.NotFound, "update_ticket.not_found")
 	}
 
