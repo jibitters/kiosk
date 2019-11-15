@@ -14,7 +14,7 @@ Content-Type: application/json; charset=utf-8
 # Notes
 # issuer: The name of your company or name of microservice who is creating the ticket.
 # owner: Who is this ticket for?
-# ticket_importance_level:Can be LOW, MEDIUM, HIGH or CRITICAL.
+# ticket_importance_level: Can be LOW, MEDIUM, HIGH or CRITICAL.
 
 # Response
 # HTTP/1.1 200 OK
