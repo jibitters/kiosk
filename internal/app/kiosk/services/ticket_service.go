@@ -5,7 +5,6 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"strings"
 	"time"
 
@@ -34,6 +33,7 @@ func NewTicketService(logger *logging.Logger, db *pgxpool.Pool) *TicketService {
 
 // Create creates a new ticket with provided values.
 func (service *TicketService) Create(context context.Context, request *rpc.Ticket) (*empty.Empty, error) {
+	request.TicketStatus = rpc.TicketStatus_NEW
 	if err := service.validateCreate(request); err != nil {
 		return nil, err
 	}
@@ -117,13 +117,8 @@ func (service *TicketService) insertTicket(ticket *rpc.Ticket) error {
 }
 
 func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
-	findTicketQuery := `
-	SELECT (id, issuer, owner, subject, content, metadata, ticket_importance_level, ticket_status, issued_at, updated_at)
-	FROM tickets WHERE id = $1`
-
-	findCommentsQuery := `
-	SELECT (id, owner, content, metadata, created_at, updated_at)
-	FROM comments WHERE comments.ticket_id = $1`
+	findTicketQuery := `SELECT * FROM tickets WHERE id = $1`
+	findCommentsQuery := `SELECT * FROM comments WHERE comments.ticket_id = $1`
 
 	batch := &pgx.Batch{}
 	batch.Queue(findTicketQuery, id)
@@ -151,7 +146,7 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 		issuedAt,
 		updatedAt,
 	); err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return nil, status.Error(codes.NotFound, "read_ticket.not_found")
 		}
 
@@ -173,13 +168,14 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 
 	for rows.Next() {
 		id := int64(0)
+		ticketID := int64(0)
 		owner := ""
 		content := ""
 		metadata := ""
 		createdAt := new(time.Time)
 		updatedAt := new(time.Time)
 
-		err := rows.Scan(&id, &owner, &content, &metadata, createdAt, updatedAt)
+		err := rows.Scan(&id, &ticketID, &owner, &content, &metadata, createdAt, updatedAt)
 		if err != nil {
 			service.logger.Error("error on scanning rows: %v", err)
 			return nil, status.Error(codes.Internal, "read_ticket.failed")
