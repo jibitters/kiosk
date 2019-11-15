@@ -33,11 +33,13 @@ GET http://localhost:8080/v1/tickets/10
 #   "content": "Hello, i have some technical issue with your API documentation. Please help!",
 #   "metadata": "{\"ip\": \"185.186.187.188\"}",
 #   "ticket_importance_level": "HIGH",
+#   "ticket_status": "NEW",
 #   "comments": [
 #     {
 #       "id": "1",
 #       "owner": "Customer Support",
 #       "content": "Please explain more about your problem!",
+#       "metadata": "",
 #       "created_at": "2019-11-15T16:59:50.19681Z",
 #       "updated_at": "2019-11-15T16:59:50.19681Z"
 #     }
