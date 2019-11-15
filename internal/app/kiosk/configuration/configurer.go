@@ -16,6 +16,7 @@ type Config struct {
 	Logger      LoggerConfig      `json:"logger"`
 	Postgres    PostgresConfig    `json:"postgres"`
 	GRPC        GRPCConfig        `json:"grpc"`
+	WEB         WEBConfig         `json:"web"`
 }
 
 // ApplicationConfig encapsulates default application properties.
@@ -101,6 +102,22 @@ func (gc *GRPCConfig) validate() {
 	}
 }
 
+// WEBConfig encapsulates web server configuration properties.
+type WEBConfig struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+func (wc *WEBConfig) validate() {
+	if wc.Host == "" {
+		wc.Host = "localhost"
+	}
+
+	if wc.Port <= 0 {
+		wc.Port = 8080
+	}
+}
+
 // Configure reads a configuration file from provided file path and populates an instance of Config struct.
 func Configure(logger *logging.Logger, filePath string) *Config {
 	logger.Info("loading configurations file from %s", filePath)
@@ -119,6 +136,7 @@ func Configure(logger *logging.Logger, filePath string) *Config {
 	config.Logger.validate()
 	config.Postgres.validate()
 	config.GRPC.validate()
+	config.WEB.validate()
 
 	return config
 }

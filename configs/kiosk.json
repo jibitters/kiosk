@@ -24,5 +24,10 @@
     "grpc": {
         "host": "localhost",
         "port": 9090
+    },
+
+    "web": {
+        "host": "localhost",
+        "port": 8080
     }
 }

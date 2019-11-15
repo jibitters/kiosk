@@ -18,6 +18,7 @@ import (
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/app/kiosk/database"
 	"github.com/jibitters/kiosk/internal/app/kiosk/server"
+	"github.com/jibitters/kiosk/internal/app/kiosk/web"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -44,6 +45,7 @@ func main() {
 	kiosk.migrate()
 	kiosk.connectToDatabase()
 	kiosk.listen()
+	kiosk.listenWeb()
 	kiosk.addInterruptHook()
 }
 
@@ -84,6 +86,16 @@ func (k *kiosk) listen() {
 
 	k.grpc = server
 	k.logger.Info("successfully started gRPC server and listening on %s:%d", k.config.GRPC.Host, k.config.GRPC.Port)
+}
+
+// Listens on provided host and port to provide a series of RESTful apis.
+func (k *kiosk) listenWeb() {
+	if err := web.ListenWeb(k.config, k.logger, k.db); err != nil {
+		k.stop()
+		k.logger.Fatal("failed to start web server: %v", err)
+	}
+
+	k.logger.Info("successfully started web server and listening on %s:%d", k.config.WEB.Host, k.config.WEB.Port)
 }
 
 // Adds interrupt hook for application to be called on os terminate signal.
