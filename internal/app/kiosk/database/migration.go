@@ -29,6 +29,7 @@ func Migrate(config *configuration.Config) error {
 	if err := migrate(db, config.Postgres.MigrationDirectory); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -54,11 +55,15 @@ func migrate(db *sql.DB, migrationDirectory string) error {
 		return err
 	}
 
-	if err := migrate.Up(); err == migration.ErrNoChange {
-		return nil
+	if err := migrate.Up(); err != nil {
+		if err == migration.ErrNoChange {
+			return nil
+		}
+
+		return err
 	}
 
-	return err
+	return nil
 }
 
 // Creates and returns database connection string required by database drivers.
