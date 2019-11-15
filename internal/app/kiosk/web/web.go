@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/fasthttp/router"
 	"github.com/golang/protobuf/jsonpb"
@@ -38,6 +39,7 @@ func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool
 	router.POST(version+"/echo", handler.echo)
 
 	router.POST(version+"/tickets", handler.createTicket)
+	router.GET(version+"/tickets/:id", handler.readTicket)
 
 	go fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", config.WEB.Host, config.WEB.Port), router.Handler)
 	return nil
@@ -81,6 +83,26 @@ func (h *handler) createTicket(context *fasthttp.RequestCtx) {
 	}
 
 	response, err := h.ticketService.Create(context, ticket)
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
+}
+
+func (h *handler) readTicket(context *fasthttp.RequestCtx) {
+	path := context.UserValue("id").(string)
+	id, err := strconv.Atoi(path)
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	response, err := h.ticketService.Read(context, &rpc.Id{Id: int64(id)})
 	if err != nil {
 		handleError(err, context)
 		return
