@@ -10,14 +10,20 @@ service TicketService {
     rpc read(Id) returns (Ticket) {}
     rpc update(Ticket) returns (google.protobuf.Empty) {}
     rpc delete(Id) returns (google.protobuf.Empty) {}
-    rpc list(ListTicketsRequest) returns (ListTicketsResponse) {}
+    rpc filter(FilterTicketsRequest) returns (FilterTicketsResponse) {}
 }
 
-message ListTicketsRequest {
-    string owner = 1;
-    Page page = 2;
+message FilterTicketsRequest {
+    string issuer = 1;
+    string owner = 2;
+    TicketImportanceLevel ticket_importance_level = 3;
+    TicketStatus ticket_status = 4;
+    string from_date = 5;
+    string to_date = 6;
+    Page page = 7;
 }
 
-message ListTicketsResponse {
+message FilterTicketsResponse {
     repeated Ticket tickets = 1;
+    Page page = 2;
 }

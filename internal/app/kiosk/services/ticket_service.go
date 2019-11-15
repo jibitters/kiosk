@@ -85,10 +85,10 @@ func (service *TicketService) Delete(context context.Context, request *rpc.Id) (
 	return &empty.Empty{}, nil
 }
 
-// List returns a paginated response of tickets that are related to an owner.
-func (service *TicketService) List(context context.Context, request *rpc.ListTicketsRequest) (*rpc.ListTicketsResponse, error) {
+// Filter returns a paginated response of tickets filtered by provided values.
+func (service *TicketService) Filter(context context.Context, request *rpc.FilterTicketsRequest) (*rpc.FilterTicketsResponse, error) {
 	// TODO: Complete implementation.
-	return &rpc.ListTicketsResponse{}, nil
+	return &rpc.FilterTicketsResponse{}, nil
 }
 
 func (service *TicketService) insertTicket(ticket *rpc.Ticket) error {
