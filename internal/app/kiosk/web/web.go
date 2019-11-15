@@ -4,11 +4,13 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/fasthttp/router"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/jackc/pgx/v4/pgxpool"
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
@@ -24,6 +26,8 @@ const version = "/v1"
 type handler struct {
 	echoService   *services.EchoService
 	ticketService *services.TicketService
+	marshaler     *jsonpb.Marshaler
+	unmarshaler   *jsonpb.Unmarshaler
 }
 
 // ListenWeb creates a new HTTP server and listens on provided host and port.
@@ -43,13 +47,15 @@ func setup(config *configuration.Config, logger *logging.Logger, db *pgxpool.Poo
 	return &handler{
 		echoService:   services.NewEchoService(),
 		ticketService: services.NewTicketService(logger, db),
+		marshaler:     &jsonpb.Marshaler{OrigName: true},
+		unmarshaler:   &jsonpb.Unmarshaler{},
 	}
 }
 
 func (h *handler) echo(context *fasthttp.RequestCtx) {
 	message := &rpc.Message{}
 
-	if err := json.Unmarshal(context.Request.Body(), message); err != nil {
+	if err := h.unmarshaler.Unmarshal(bytes.NewReader(context.Request.Body()), message); err != nil {
 		handleError(err, context)
 		return
 	}
@@ -60,15 +66,16 @@ func (h *handler) echo(context *fasthttp.RequestCtx) {
 		return
 	}
 
-	responseBody, _ := json.Marshal(response)
-	context.Response.Header.Add("Content-Type", "application/json; charset=utf-8")
-	context.Write(responseBody)
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
 }
 
 func (h *handler) createTicket(context *fasthttp.RequestCtx) {
 	ticket := &rpc.Ticket{}
 
-	if err := json.Unmarshal(context.Request.Body(), ticket); err != nil {
+	if err := h.unmarshaler.Unmarshal(bytes.NewReader(context.Request.Body()), ticket); err != nil {
 		handleError(err, context)
 		return
 	}
@@ -79,9 +86,10 @@ func (h *handler) createTicket(context *fasthttp.RequestCtx) {
 		return
 	}
 
-	responseBody, _ := json.Marshal(response)
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
 	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
-	context.Write(responseBody)
+	context.Write(responseBody.Bytes())
 }
 
 func handleError(err error, context *fasthttp.RequestCtx) {

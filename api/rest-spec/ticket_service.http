@@ -8,13 +8,13 @@ Content-Type: application/json; charset=utf-8
     "subject": "Technical Issue!",
     "content": "Hello, i have some technical issue with your API documentation. Please help!",
     "metadata": "{\"ip\": \"185.186.187.188\"}",
-    "ticket_importance_level": 2
+    "ticket_importance_level": "HIGH"
 }
 
 # Notes
 # issuer: The name of your company or name of microservice who is creating the ticket.
 # owner: Who is this ticket for?
-# ticket_importance_level: 0 for LOW, 1 for MEDIUM and 2 for HIGH.
+# ticket_importance_level:Can be LOW, MEDIUM, HIGH or CRITICAL.
 
 # Response
 # HTTP/1.1 200 OK
