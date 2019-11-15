@@ -49,7 +49,7 @@ func setup(config *configuration.Config, logger *logging.Logger, db *pgxpool.Poo
 	return &handler{
 		echoService:   services.NewEchoService(),
 		ticketService: services.NewTicketService(logger, db),
-		marshaler:     &jsonpb.Marshaler{OrigName: true},
+		marshaler:     &jsonpb.Marshaler{OrigName: true, EmitDefaults: true},
 		unmarshaler:   &jsonpb.Unmarshaler{},
 	}
 }
