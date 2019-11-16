@@ -3,7 +3,7 @@ CREATE TABLE tickets (
     id                                 BIGSERIAL NOT NULL,
     issuer                             VARCHAR(40) NOT NULL,
     owner                              VARCHAR(40) NOT NULL,
-    subject                            VARCHAR(100) NOT NULL,
+    subject                            VARCHAR(255) NOT NULL,
     content                            TEXT NOT NULL,
     metadata                           TEXT,
     ticket_importance_level            VARCHAR(20) NOT NULL,
