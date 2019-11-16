@@ -42,6 +42,7 @@ func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool
 	router.GET(version+"/tickets/:id", handler.readTicket)
 	router.PUT(version+"/tickets", handler.updateTicket)
 	router.DELETE(version+"/tickets/:id", handler.deleteTicket)
+	router.GET(version+"/tickets", handler.filterTickets)
 
 	go fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", config.WEB.Host, config.WEB.Port), router.Handler)
 	return nil
@@ -145,6 +146,36 @@ func (h *handler) deleteTicket(context *fasthttp.RequestCtx) {
 	}
 
 	response, err := h.ticketService.Delete(context, &rpc.Id{Id: id})
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
+}
+
+func (h *handler) filterTickets(context *fasthttp.RequestCtx) {
+	issuer := string(context.QueryArgs().Peek("issuer"))
+	owner := string(context.QueryArgs().Peek("owner"))
+	ticketImportanceLevel := string(context.QueryArgs().Peek("ticket_importance_level"))
+	ticketStatus := string(context.QueryArgs().Peek("ticket_status"))
+	fromDate := string(context.QueryArgs().Peek("from_date"))
+	toDate := string(context.QueryArgs().Peek("to_data"))
+	pageNumber, _ := context.QueryArgs().GetUint("page_number")
+	pageSize, _ := context.QueryArgs().GetUint("page_size")
+
+	response, err := h.ticketService.Filter(context, &rpc.FilterTicketsRequest{
+		Issuer:                issuer,
+		Owner:                 owner,
+		TicketImportanceLevel: rpc.TicketImportanceLevel(rpc.TicketImportanceLevel_value[ticketImportanceLevel]),
+		TicketStatus:          rpc.TicketStatus(rpc.TicketImportanceLevel_value[ticketStatus]),
+		FromDate:              fromDate,
+		ToDate:                toDate,
+		Page:                  &rpc.Page{Number: int32(pageNumber), Size: int32(pageSize)},
+	})
 	if err != nil {
 		handleError(err, context)
 		return

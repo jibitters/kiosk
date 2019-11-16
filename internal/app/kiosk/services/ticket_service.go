@@ -5,6 +5,7 @@ package services
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,7 +34,6 @@ func NewTicketService(logger *logging.Logger, db *pgxpool.Pool) *TicketService {
 
 // Create creates a new ticket with provided values.
 func (service *TicketService) Create(context context.Context, request *rpc.Ticket) (*empty.Empty, error) {
-	request.TicketStatus = rpc.TicketStatus_NEW
 	if err := service.validateCreate(request); err != nil {
 		return nil, err
 	}
@@ -47,8 +47,8 @@ func (service *TicketService) Create(context context.Context, request *rpc.Ticke
 
 // Read returns back a ticket by using the provided id to find one.
 func (service *TicketService) Read(context context.Context, request *rpc.Id) (*rpc.Ticket, error) {
-	if request.Id < 1 {
-		return nil, status.Error(codes.InvalidArgument, "read_ticket.invalid_id")
+	if err := service.validateRead(request); err != nil {
+		return nil, err
 	}
 
 	ticket, err := service.findOne(request.Id)
@@ -74,8 +74,8 @@ func (service *TicketService) Update(context context.Context, request *rpc.Ticke
 
 // Delete deletes a ticket by using the provided id. Use carefully, it has hard delete effect on db.
 func (service *TicketService) Delete(context context.Context, request *rpc.Id) (*empty.Empty, error) {
-	if request.Id < 1 {
-		return nil, status.Error(codes.InvalidArgument, "delete_ticket.invalid_id")
+	if err := service.validateDelete(request); err != nil {
+		return nil, err
 	}
 
 	if err := service.deleteOne(request); err != nil {
@@ -87,9 +87,96 @@ func (service *TicketService) Delete(context context.Context, request *rpc.Id) (
 
 // Filter returns a paginated response of tickets filtered by provided values.
 func (service *TicketService) Filter(context context.Context, request *rpc.FilterTicketsRequest) (*rpc.FilterTicketsResponse, error) {
-	// TODO: Complete implementation.
+	if err := service.validateFilter(request); err != nil {
+		return nil, err
+	}
 
-	return &rpc.FilterTicketsResponse{}, nil
+	filterTickets, err := service.filter(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return filterTickets, nil
+}
+
+func (service *TicketService) validateCreate(request *rpc.Ticket) error {
+	request.TicketStatus = rpc.TicketStatus_NEW
+
+	request.Issuer = strings.TrimSpace(request.Issuer)
+	request.Owner = strings.TrimSpace(request.Owner)
+	request.Subject = strings.TrimSpace(request.Subject)
+	request.Content = strings.TrimSpace(request.Content)
+	request.Metadata = strings.TrimSpace(request.Metadata)
+
+	if len(request.Issuer) == 0 {
+		return status.Error(codes.InvalidArgument, "create_ticket.empty_issuer")
+	}
+
+	if len(request.Owner) == 0 {
+		return status.Error(codes.InvalidArgument, "create_ticket.empty_owner")
+	}
+
+	if len(request.Subject) == 0 {
+		return status.Error(codes.InvalidArgument, "create_ticket.empty_subject")
+	}
+
+	if len(request.Content) == 0 {
+		return status.Error(codes.InvalidArgument, "create_ticket.empty_content")
+	}
+
+	if request.TicketStatus != rpc.TicketStatus_NEW {
+		return status.Error(codes.InvalidArgument, "create_ticket.invalid_status")
+	}
+
+	return nil
+}
+
+func (service *TicketService) validateRead(request *rpc.Id) error {
+	if request.Id < 1 {
+		return status.Error(codes.InvalidArgument, "read_ticket.invalid_id")
+	}
+
+	return nil
+}
+
+func (service *TicketService) validateUpdate(request *rpc.Ticket) error {
+	if request.Id < 1 {
+		return status.Error(codes.InvalidArgument, "update_ticket.invalid_id")
+	}
+
+	if request.TicketStatus == rpc.TicketStatus_NEW {
+		return status.Error(codes.InvalidArgument, "update_ticket.invalid_ticket_status")
+	}
+
+	return nil
+}
+
+func (service *TicketService) validateDelete(request *rpc.Id) error {
+	if request.Id < 1 {
+		return status.Error(codes.InvalidArgument, "delete_ticket.invalid_id")
+	}
+
+	return nil
+}
+
+func (service *TicketService) validateFilter(request *rpc.FilterTicketsRequest) error {
+	if request.FromDate == "" {
+		request.FromDate = "2000-01-01T00:00:00Z"
+	}
+
+	if request.ToDate == "" {
+		request.ToDate = time.Now().UTC().Format(time.RFC3339Nano)
+	}
+
+	if request.Page.Number < 1 {
+		return status.Error(codes.InvalidArgument, "filter.invalid_page_number")
+	}
+
+	if request.Page.Size < 1 || request.Page.Number > 150 {
+		return status.Error(codes.InvalidArgument, "filter.invalid_page_size")
+	}
+
+	return nil
 }
 
 func (service *TicketService) insertOne(ticket *rpc.Ticket) error {
@@ -196,7 +283,7 @@ func (service *TicketService) findOne(id int64) (*rpc.Ticket, error) {
 }
 
 func (service *TicketService) updateOne(ticket *rpc.Ticket) error {
-	query := `UPDATE tickets SET ticket_status=$1 WHERE id=$2`
+	query := `UPDATE tickets SET ticket_status=$1, updated_at=now() WHERE id=$2`
 
 	commandTag, err := service.db.Exec(context.Background(), query, ticket.TicketStatus.String(), ticket.Id)
 	if err != nil {
@@ -230,44 +317,108 @@ func (service *TicketService) deleteOne(id *rpc.Id) error {
 	return nil
 }
 
-func (service *TicketService) validateCreate(ticket *rpc.Ticket) error {
-	ticket.Issuer = strings.TrimSpace(ticket.Issuer)
-	ticket.Owner = strings.TrimSpace(ticket.Owner)
-	ticket.Subject = strings.TrimSpace(ticket.Subject)
-	ticket.Content = strings.TrimSpace(ticket.Content)
-	ticket.Metadata = strings.TrimSpace(ticket.Metadata)
+func (service *TicketService) filter(request *rpc.FilterTicketsRequest) (*rpc.FilterTicketsResponse, error) {
+	response := &rpc.FilterTicketsResponse{Page: &rpc.Page{}}
 
-	if len(ticket.Issuer) == 0 {
-		return status.Error(codes.InvalidArgument, "create_ticket.empty_issuer")
+	batch := &pgx.Batch{}
+	query, args := buildFilterTicketsQuery(request)
+	batch.Queue(query, args...)
+
+	results := service.db.SendBatch(context.Background(), batch)
+	defer results.Close()
+
+	rows, err := results.Query()
+	if err != nil {
+		service.logger.Error("error on filtering tickets: %v", err)
+		return nil, status.Error(codes.Internal, "filter.failed")
+	}
+	defer rows.Close()
+
+	tickets := make([]*rpc.Ticket, 0)
+	for rows.Next() {
+		ticket := &rpc.Ticket{}
+		ticketImportanceLevel := ""
+		ticketStatus := ""
+		issuedAt := new(time.Time)
+		updatedAt := new(time.Time)
+
+		err := rows.Scan(
+			&ticket.Id,
+			&ticket.Issuer,
+			&ticket.Owner,
+			&ticket.Subject,
+			&ticket.Content,
+			&ticket.Metadata,
+			&ticketImportanceLevel,
+			&ticketStatus,
+			issuedAt,
+			updatedAt,
+		)
+		if err != nil {
+			service.logger.Error("error on scanning rows: %v", err)
+			return nil, status.Error(codes.Internal, "filter.failed")
+		}
+
+		tickets = append(tickets, ticket)
 	}
 
-	if len(ticket.Owner) == 0 {
-		return status.Error(codes.InvalidArgument, "create_ticket.empty_owner")
+	response.Page.Number = request.Page.Number
+	response.Page.Size = request.Page.Size
+	response.Page.HasNext = len(tickets) > int(request.Page.Size)
+
+	if response.Page.HasNext {
+		response.Tickets = tickets[:len(tickets)-1]
+	} else {
+		response.Tickets = tickets
 	}
 
-	if len(ticket.Subject) == 0 {
-		return status.Error(codes.InvalidArgument, "create_ticket.empty_subject")
-	}
-
-	if len(ticket.Content) == 0 {
-		return status.Error(codes.InvalidArgument, "create_ticket.empty_content")
-	}
-
-	if ticket.TicketStatus != rpc.TicketStatus_NEW {
-		return status.Error(codes.InvalidArgument, "create_ticket.invalid_status")
-	}
-
-	return nil
+	return response, nil
 }
 
-func (service *TicketService) validateUpdate(ticket *rpc.Ticket) error {
-	if ticket.Id < 1 {
-		return status.Error(codes.InvalidArgument, "update_ticket.invalid_id")
+func buildFilterTicketsQuery(request *rpc.FilterTicketsRequest) (string, []interface{}) {
+	offset := (request.Page.Number - 1) * request.Page.Size
+	limit := request.Page.Size
+
+	args := make([]interface{}, 0)
+	query := strings.Builder{}
+	query.WriteString(`SELECT * FROM tickets WHERE`)
+
+	counter := 0
+	counter++
+	query.WriteString(` ticket_importance_level = $` + strconv.Itoa(counter))
+	args = append(args, request.TicketImportanceLevel.String())
+
+	counter++
+	query.WriteString(` AND ticket_status = $` + strconv.Itoa(counter))
+	args = append(args, request.TicketStatus.String())
+
+	counter++
+	query.WriteString(` AND issued_at >= $` + strconv.Itoa(counter))
+	args = append(args, request.FromDate)
+
+	counter++
+	query.WriteString(` AND issued_at < $` + strconv.Itoa(counter))
+	args = append(args, request.ToDate)
+
+	if request.Issuer != "" {
+		counter++
+		query.WriteString(` AND issuer = $` + strconv.Itoa(counter))
+		args = append(args, request.Issuer)
 	}
 
-	if ticket.TicketStatus == rpc.TicketStatus_NEW {
-		return status.Error(codes.InvalidArgument, "update_ticket.invalid_ticket_status")
+	if request.Owner != "" {
+		counter++
+		query.WriteString(` AND owner = $` + strconv.Itoa(counter))
+		args = append(args, request.Owner)
 	}
 
-	return nil
+	counter++
+	query.WriteString(` ORDER BY issued_at DESC OFFSET $` + strconv.Itoa(counter))
+	args = append(args, offset)
+
+	counter++
+	query.WriteString(` LIMIT $` + strconv.Itoa(counter))
+	args = append(args, limit+1)
+
+	return query.String(), args
 }
