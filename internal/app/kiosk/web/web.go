@@ -41,6 +41,7 @@ func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool
 	router.POST(version+"/tickets", handler.createTicket)
 	router.GET(version+"/tickets/:id", handler.readTicket)
 	router.PUT(version+"/tickets", handler.updateTicket)
+	router.DELETE(version+"/tickets/:id", handler.deleteTicket)
 
 	go fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", config.WEB.Host, config.WEB.Port), router.Handler)
 	return nil
@@ -96,14 +97,14 @@ func (h *handler) createTicket(context *fasthttp.RequestCtx) {
 }
 
 func (h *handler) readTicket(context *fasthttp.RequestCtx) {
-	path := context.UserValue("id").(string)
-	id, err := strconv.Atoi(path)
+	pathSegment := context.UserValue("id").(string)
+	id, err := strconv.ParseInt(pathSegment, 10, 64)
 	if err != nil {
 		handleError(err, context)
 		return
 	}
 
-	response, err := h.ticketService.Read(context, &rpc.Id{Id: int64(id)})
+	response, err := h.ticketService.Read(context, &rpc.Id{Id: id})
 	if err != nil {
 		handleError(err, context)
 		return
@@ -124,6 +125,26 @@ func (h *handler) updateTicket(context *fasthttp.RequestCtx) {
 	}
 
 	response, err := h.ticketService.Update(context, ticket)
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
+}
+
+func (h *handler) deleteTicket(context *fasthttp.RequestCtx) {
+	pathSegment := context.UserValue("id").(string)
+	id, err := strconv.ParseInt(pathSegment, 10, 64)
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	response, err := h.ticketService.Delete(context, &rpc.Id{Id: id})
 	if err != nil {
 		handleError(err, context)
 		return

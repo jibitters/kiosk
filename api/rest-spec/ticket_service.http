@@ -63,3 +63,10 @@ Content-Type: application/json; charset=utf-8
 # Response
 # HTTP/1.1 200 OK
 # {}
+
+### Delete ticket request. Deletes ticket and all associated comments by using its id.
+DELETE http://localhost:8080/v1/tickets/25
+
+# Response
+# HTTP/1.1 200 OK
+# {}
