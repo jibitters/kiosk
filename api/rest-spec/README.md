@@ -43,6 +43,14 @@ The code field and its possible values are described on the following list:
 
 - update_ticket.invalid_ticket_status
 
+- update_ticket.not_found
+
 - update_ticket.failed
 
-- update_ticket.not_found
+--
+
+- delete_ticket.invalid_id
+
+- delete_ticket.not_found
+
+- delete_ticket.failed

@@ -38,7 +38,7 @@ func (service *TicketService) Create(context context.Context, request *rpc.Ticke
 		return nil, err
 	}
 
-	if err := service.insertTicket(request); err != nil {
+	if err := service.insertOne(request); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +51,7 @@ func (service *TicketService) Read(context context.Context, request *rpc.Id) (*r
 		return nil, status.Error(codes.InvalidArgument, "read_ticket.invalid_id")
 	}
 
-	ticket, err := service.findTicket(request.Id)
+	ticket, err := service.findOne(request.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (service *TicketService) Update(context context.Context, request *rpc.Ticke
 		return nil, err
 	}
 
-	if err := service.updateTicket(request); err != nil {
+	if err := service.updateOne(request); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (service *TicketService) Delete(context context.Context, request *rpc.Id) (
 		return nil, status.Error(codes.InvalidArgument, "delete_ticket.invalid_id")
 	}
 
-	if err := service.deleteTicket(request); err != nil {
+	if err := service.deleteOne(request); err != nil {
 		return nil, err
 	}
 
@@ -88,10 +88,11 @@ func (service *TicketService) Delete(context context.Context, request *rpc.Id) (
 // Filter returns a paginated response of tickets filtered by provided values.
 func (service *TicketService) Filter(context context.Context, request *rpc.FilterTicketsRequest) (*rpc.FilterTicketsResponse, error) {
 	// TODO: Complete implementation.
+
 	return &rpc.FilterTicketsResponse{}, nil
 }
 
-func (service *TicketService) insertTicket(ticket *rpc.Ticket) error {
+func (service *TicketService) insertOne(ticket *rpc.Ticket) error {
 	query := `
 	INSERT INTO tickets(issuer, owner, subject, content, metadata, ticket_importance_level, ticket_status, issued_at, updated_at)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())`
@@ -116,7 +117,7 @@ func (service *TicketService) insertTicket(ticket *rpc.Ticket) error {
 	return nil
 }
 
-func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
+func (service *TicketService) findOne(id int64) (*rpc.Ticket, error) {
 	findTicketQuery := `SELECT * FROM tickets WHERE id = $1`
 	findCommentsQuery := `SELECT * FROM comments WHERE comments.ticket_id = $1`
 
@@ -194,7 +195,7 @@ func (service *TicketService) findTicket(id int64) (*rpc.Ticket, error) {
 	return ticket, nil
 }
 
-func (service *TicketService) updateTicket(ticket *rpc.Ticket) error {
+func (service *TicketService) updateOne(ticket *rpc.Ticket) error {
 	query := `UPDATE tickets SET ticket_status=$1 WHERE id=$2`
 
 	commandTag, err := service.db.Exec(context.Background(), query, ticket.TicketStatus.String(), ticket.Id)
@@ -210,14 +211,14 @@ func (service *TicketService) updateTicket(ticket *rpc.Ticket) error {
 	return nil
 }
 
-func (service *TicketService) deleteTicket(id *rpc.Id) error {
+func (service *TicketService) deleteOne(id *rpc.Id) error {
 	deleteCommentsQuery := `DELETE FROM comments WHERE ticket_id=$1`
 	deleteTicketQuery := `DELETE FROM tickets WHERE id=$1`
 
 	batch := &pgx.Batch{}
 	batch.Queue("BEGIN")
-	batch.Queue(deleteCommentsQuery, id)
-	batch.Queue(deleteTicketQuery, id)
+	batch.Queue(deleteCommentsQuery, id.Id)
+	batch.Queue(deleteTicketQuery, id.Id)
 	batch.Queue("COMMIT")
 
 	results := service.db.SendBatch(context.Background(), batch)
