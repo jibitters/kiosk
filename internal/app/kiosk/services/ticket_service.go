@@ -38,7 +38,7 @@ func (service *TicketService) Create(context context.Context, request *rpc.Ticke
 		return nil, err
 	}
 
-	if err := service.insertOne(request); err != nil {
+	if err := service.insertOne(context, request); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +51,7 @@ func (service *TicketService) Read(context context.Context, request *rpc.Id) (*r
 		return nil, err
 	}
 
-	ticket, err := service.findOne(request.Id)
+	ticket, err := service.findOne(context, request.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (service *TicketService) Update(context context.Context, request *rpc.Ticke
 		return nil, err
 	}
 
-	if err := service.updateOne(request); err != nil {
+	if err := service.updateOne(context, request); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (service *TicketService) Delete(context context.Context, request *rpc.Id) (
 		return nil, err
 	}
 
-	if err := service.deleteOne(request); err != nil {
+	if err := service.deleteOne(context, request); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func (service *TicketService) Filter(context context.Context, request *rpc.Filte
 		return nil, err
 	}
 
-	filterTickets, err := service.filter(request)
+	filterTickets, err := service.filter(context, request)
 	if err != nil {
 		return nil, err
 	}
@@ -179,13 +179,13 @@ func (service *TicketService) validateFilter(request *rpc.FilterTicketsRequest) 
 	return nil
 }
 
-func (service *TicketService) insertOne(ticket *rpc.Ticket) error {
+func (service *TicketService) insertOne(context context.Context, ticket *rpc.Ticket) error {
 	query := `
 	INSERT INTO tickets(issuer, owner, subject, content, metadata, ticket_importance_level, ticket_status, issued_at, updated_at)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())`
 
 	_, err := service.db.Exec(
-		context.Background(),
+		context,
 		query,
 		ticket.Issuer,
 		ticket.Owner,
@@ -204,15 +204,15 @@ func (service *TicketService) insertOne(ticket *rpc.Ticket) error {
 	return nil
 }
 
-func (service *TicketService) findOne(id int64) (*rpc.Ticket, error) {
-	findTicketQuery := `SELECT * FROM tickets WHERE id = $1`
-	findCommentsQuery := `SELECT * FROM comments WHERE comments.ticket_id = $1`
+func (service *TicketService) findOne(context context.Context, id int64) (*rpc.Ticket, error) {
+	findTicketQuery := `SELECT id, issuer, owner, subject, content, metadata, ticket_importance_level, ticket_status, issued_at, updated_at FROM tickets WHERE id = $1`
+	findCommentsQuery := `SELECT id, ticket_id, owner, content, metadata, created_at, updated_at FROM comments WHERE comments.ticket_id = $1`
 
 	batch := &pgx.Batch{}
 	batch.Queue(findTicketQuery, id)
 	batch.Queue(findCommentsQuery, id)
 
-	results := service.db.SendBatch(context.Background(), batch)
+	results := service.db.SendBatch(context, batch)
 	defer results.Close()
 
 	ticket := &rpc.Ticket{}
@@ -282,10 +282,10 @@ func (service *TicketService) findOne(id int64) (*rpc.Ticket, error) {
 	return ticket, nil
 }
 
-func (service *TicketService) updateOne(ticket *rpc.Ticket) error {
+func (service *TicketService) updateOne(context context.Context, ticket *rpc.Ticket) error {
 	query := `UPDATE tickets SET ticket_status=$1, updated_at=now() WHERE id=$2`
 
-	commandTag, err := service.db.Exec(context.Background(), query, ticket.TicketStatus.String(), ticket.Id)
+	commandTag, err := service.db.Exec(context, query, ticket.TicketStatus.String(), ticket.Id)
 	if err != nil {
 		service.logger.Error("error on updating ticket: %v", err)
 		return status.Error(codes.Internal, "update_ticket.failed")
@@ -298,7 +298,7 @@ func (service *TicketService) updateOne(ticket *rpc.Ticket) error {
 	return nil
 }
 
-func (service *TicketService) deleteOne(id *rpc.Id) error {
+func (service *TicketService) deleteOne(context context.Context, id *rpc.Id) error {
 	deleteCommentsQuery := `DELETE FROM comments WHERE ticket_id=$1`
 	deleteTicketQuery := `DELETE FROM tickets WHERE id=$1`
 
@@ -308,7 +308,7 @@ func (service *TicketService) deleteOne(id *rpc.Id) error {
 	batch.Queue(deleteTicketQuery, id.Id)
 	batch.Queue("COMMIT")
 
-	results := service.db.SendBatch(context.Background(), batch)
+	results := service.db.SendBatch(context, batch)
 	if err := results.Close(); err != nil {
 		service.logger.Error("error on deleting ticket: %v", err)
 		return status.Error(codes.Internal, "delete_ticket.failed")
@@ -317,17 +317,11 @@ func (service *TicketService) deleteOne(id *rpc.Id) error {
 	return nil
 }
 
-func (service *TicketService) filter(request *rpc.FilterTicketsRequest) (*rpc.FilterTicketsResponse, error) {
+func (service *TicketService) filter(context context.Context, request *rpc.FilterTicketsRequest) (*rpc.FilterTicketsResponse, error) {
 	response := &rpc.FilterTicketsResponse{Page: &rpc.Page{}}
 
-	batch := &pgx.Batch{}
 	query, args := buildFilterTicketsQuery(request)
-	batch.Queue(query, args...)
-
-	results := service.db.SendBatch(context.Background(), batch)
-	defer results.Close()
-
-	rows, err := results.Query()
+	rows, err := service.db.Query(context, query, args...)
 	if err != nil {
 		service.logger.Error("error on filtering tickets: %v", err)
 		return nil, status.Error(codes.Internal, "filter.failed")
@@ -335,6 +329,7 @@ func (service *TicketService) filter(request *rpc.FilterTicketsRequest) (*rpc.Fi
 	defer rows.Close()
 
 	tickets := make([]*rpc.Ticket, 0)
+	ticketsMap := make(map[int64]*rpc.Ticket)
 	for rows.Next() {
 		ticket := &rpc.Ticket{}
 		ticketImportanceLevel := ""
@@ -360,18 +355,54 @@ func (service *TicketService) filter(request *rpc.FilterTicketsRequest) (*rpc.Fi
 		}
 
 		tickets = append(tickets, ticket)
+		ticketsMap[ticket.Id] = ticket
 	}
 
 	response.Page.Number = request.Page.Number
 	response.Page.Size = request.Page.Size
 	response.Page.HasNext = len(tickets) > int(request.Page.Size)
 
+	// Drop the extra one.
 	if response.Page.HasNext {
-		response.Tickets = tickets[:len(tickets)-1]
-	} else {
-		response.Tickets = tickets
+		tickets = tickets[:len(tickets)-1]
 	}
 
+	if len(tickets) > 0 {
+		query, args = buildFindAllCommentsQuery(tickets)
+		rows, err = service.db.Query(context, query, args...)
+		if err != nil {
+			service.logger.Error("error on reading comments: %v", err)
+			return nil, status.Error(codes.Internal, "filter.failed")
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			id := int64(0)
+			ticketID := int64(0)
+			owner := ""
+			content := ""
+			metadata := ""
+			createdAt := new(time.Time)
+			updatedAt := new(time.Time)
+
+			err := rows.Scan(&id, &ticketID, &owner, &content, &metadata, createdAt, updatedAt)
+			if err != nil {
+				service.logger.Error("error on scanning rows: %v", err)
+				return nil, status.Error(codes.Internal, "filter.failed")
+			}
+
+			ticketsMap[ticketID].Comments = append(ticketsMap[ticketID].Comments, &rpc.Comment{
+				Id:        id,
+				Owner:     owner,
+				Content:   content,
+				Metadata:  metadata,
+				CreatedAt: createdAt.Format(time.RFC3339Nano),
+				UpdatedAt: updatedAt.Format(time.RFC3339Nano),
+			})
+		}
+	}
+
+	response.Tickets = tickets
 	return response, nil
 }
 
@@ -381,7 +412,7 @@ func buildFilterTicketsQuery(request *rpc.FilterTicketsRequest) (string, []inter
 
 	args := make([]interface{}, 0)
 	query := strings.Builder{}
-	query.WriteString(`SELECT * FROM tickets WHERE`)
+	query.WriteString(`SELECT id, issuer, owner, subject, content, metadata, ticket_importance_level, ticket_status, issued_at, updated_at FROM tickets WHERE`)
 
 	counter := 0
 	counter++
@@ -419,6 +450,27 @@ func buildFilterTicketsQuery(request *rpc.FilterTicketsRequest) (string, []inter
 	counter++
 	query.WriteString(` LIMIT $` + strconv.Itoa(counter))
 	args = append(args, limit+1)
+
+	return query.String(), args
+}
+
+func buildFindAllCommentsQuery(tickets []*rpc.Ticket) (string, []interface{}) {
+	args := make([]interface{}, 0)
+	query := strings.Builder{}
+	query.WriteString(`SELECT id, ticket_id, owner, content, metadata, created_at, updated_at FROM comments WHERE ticket_id IN (`)
+
+	counter := 0
+	for _, t := range tickets {
+		if counter > 0 {
+			query.WriteString(`, `)
+		}
+		counter++
+		query.WriteString(`$`)
+		query.WriteString(strconv.Itoa(counter))
+
+		args = append(args, t.Id)
+	}
+	query.WriteString(`) ORDER BY created_at DESC`)
 
 	return query.String(), args
 }
