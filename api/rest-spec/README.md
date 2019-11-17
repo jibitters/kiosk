@@ -54,3 +54,11 @@ The code field and its possible values are described on the following list:
 - delete_ticket.not_found
 
 - delete_ticket.failed
+
+--
+
+- filter.invalid_page_number
+
+- filter.invalid_page_size
+
+- filter.failed
