@@ -6,7 +6,7 @@ import "models.proto";
 import "google/protobuf/empty.proto";
 
 service CommentService {
-    rpc read(Id) returns (Comment) {}
+    rpc create(Comment) returns (google.protobuf.Empty) {}
     rpc update(Comment) returns (google.protobuf.Empty) {}
     rpc delete(Id) returns (google.protobuf.Empty) {}
 }

@@ -28,11 +28,12 @@ message Ticket {
 
 message Comment {
     int64 id = 1;
-    string owner = 2;
-    string content = 3;
-    string metadata = 4;
-    string created_at = 5;
-    string updated_at = 6;
+    int64 ticket_id = 2;
+    string owner = 3;
+    string content = 4;
+    string metadata = 5;
+    string created_at = 6;
+    string updated_at = 7;
 }
 
 enum TicketImportanceLevel {

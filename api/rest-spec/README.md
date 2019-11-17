@@ -51,8 +51,6 @@ The code field and its possible values are described on the following list:
 
 - delete_ticket.invalid_id
 
-- delete_ticket.not_found
-
 - delete_ticket.failed
 
 --
@@ -62,3 +60,23 @@ The code field and its possible values are described on the following list:
 - filter.invalid_page_size
 
 - filter.failed
+
+--
+
+- create_comment.empty_owner
+
+- create_comment.empty_content
+
+- create_comment.failed
+
+--
+
+- update_comment.failed
+
+- update_comment.ticket_not_found
+
+--
+
+- delete_comment.invalid_id
+
+- delete_comment.failed

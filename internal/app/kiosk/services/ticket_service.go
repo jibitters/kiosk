@@ -72,7 +72,7 @@ func (service *TicketService) Update(context context.Context, request *rpc.Ticke
 	return &empty.Empty{}, nil
 }
 
-// Delete deletes a ticket by using the provided id. Use carefully, it has hard delete effect on db.
+// Delete deletes a ticket by using the provided id. Use carefully, it has hard delete effect on database.
 func (service *TicketService) Delete(context context.Context, request *rpc.Id) (*empty.Empty, error) {
 	if err := service.validateDelete(request); err != nil {
 		return nil, err
@@ -271,6 +271,7 @@ func (service *TicketService) findOne(context context.Context, id int64) (*rpc.T
 
 		ticket.Comments = append(ticket.Comments, &rpc.Comment{
 			Id:        id,
+			TicketId:  ticketID,
 			Owner:     owner,
 			Content:   content,
 			Metadata:  metadata,
@@ -393,6 +394,7 @@ func (service *TicketService) filter(context context.Context, request *rpc.Filte
 
 			ticketsMap[ticketID].Comments = append(ticketsMap[ticketID].Comments, &rpc.Comment{
 				Id:        id,
+				TicketId:  ticketID,
 				Owner:     owner,
 				Content:   content,
 				Metadata:  metadata,

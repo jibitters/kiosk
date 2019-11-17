@@ -25,10 +25,11 @@ import (
 const version = "/v1"
 
 type handler struct {
-	echoService   *services.EchoService
-	ticketService *services.TicketService
-	marshaler     *jsonpb.Marshaler
-	unmarshaler   *jsonpb.Unmarshaler
+	echoService    *services.EchoService
+	ticketService  *services.TicketService
+	commentService *services.CommentService
+	marshaler      *jsonpb.Marshaler
+	unmarshaler    *jsonpb.Unmarshaler
 }
 
 // ListenWeb creates a new HTTP server and listens on provided host and port.
@@ -44,16 +45,21 @@ func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool
 	router.DELETE(version+"/tickets/:id", handler.deleteTicket)
 	router.GET(version+"/tickets", handler.filterTickets)
 
+	router.POST(version+"/comments", handler.createComment)
+	router.PUT(version+"/comments", handler.updateComment)
+	router.DELETE(version+"/comments/:id", handler.deleteComment)
+
 	go fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", config.WEB.Host, config.WEB.Port), router.Handler)
 	return nil
 }
 
 func setup(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool) *handler {
 	return &handler{
-		echoService:   services.NewEchoService(),
-		ticketService: services.NewTicketService(logger, db),
-		marshaler:     &jsonpb.Marshaler{OrigName: true, EmitDefaults: true},
-		unmarshaler:   &jsonpb.Unmarshaler{},
+		echoService:    services.NewEchoService(),
+		ticketService:  services.NewTicketService(logger, db),
+		commentService: services.NewCommentService(logger, db),
+		marshaler:      &jsonpb.Marshaler{OrigName: true, EmitDefaults: true},
+		unmarshaler:    &jsonpb.Unmarshaler{},
 	}
 }
 
@@ -176,6 +182,66 @@ func (h *handler) filterTickets(context *fasthttp.RequestCtx) {
 		ToDate:                toDate,
 		Page:                  &rpc.Page{Number: int32(pageNumber), Size: int32(pageSize)},
 	})
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
+}
+
+func (h *handler) createComment(context *fasthttp.RequestCtx) {
+	comment := &rpc.Comment{}
+
+	if err := h.unmarshaler.Unmarshal(bytes.NewReader(context.Request.Body()), comment); err != nil {
+		handleError(err, context)
+		return
+	}
+
+	response, err := h.commentService.Create(context, comment)
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
+}
+
+func (h *handler) updateComment(context *fasthttp.RequestCtx) {
+	comment := &rpc.Comment{}
+
+	if err := h.unmarshaler.Unmarshal(bytes.NewReader(context.Request.Body()), comment); err != nil {
+		handleError(err, context)
+		return
+	}
+
+	response, err := h.commentService.Update(context, comment)
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	responseBody := new(bytes.Buffer)
+	h.marshaler.Marshal(responseBody, response)
+	context.Response.Header.Add("Content-Type", "application/json; application/json; charset=utf-8")
+	context.Write(responseBody.Bytes())
+}
+
+func (h *handler) deleteComment(context *fasthttp.RequestCtx) {
+	pathSegment := context.UserValue("id").(string)
+	id, err := strconv.ParseInt(pathSegment, 10, 64)
+	if err != nil {
+		handleError(err, context)
+		return
+	}
+
+	response, err := h.commentService.Delete(context, &rpc.Id{Id: id})
 	if err != nil {
 		handleError(err, context)
 		return
