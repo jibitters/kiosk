@@ -55,11 +55,11 @@ The code field and its possible values are described on the following list:
 
 --
 
-- filter.invalid_page_number
+- filter_tickets.invalid_page_number
 
-- filter.invalid_page_size
+- filter_tickets.invalid_page_size
 
-- filter.failed
+- filter_tickets.failed
 
 --
 
