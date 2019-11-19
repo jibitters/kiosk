@@ -51,4 +51,4 @@ Kiosk provides two different types of interfaces, one is based on gRPC as protob
 |Type                                                      |
 |---                                                       |
 |[Protobuf Definitions](api/protobuf-spec)                 |
-|[REST API Specification](api/rest-spec/README.md)         |
+|[REST API Specification](api/rest-spec)                   |
