@@ -18,19 +18,19 @@ You can download the latest stable release from [releases](https://github.com/ji
 
 The requirements to test and build the project are as follow:
 
-|Requirement                |Version|
-|---                        |---    |
-|protoc                     |3.9.2  |
-|golang/protobuf            |1.3.2  |
-|grpc                       |1.25.1 |
-|postgres                   |11.6   |
-|nats                       |2.12   |
+|Requirement                           |Version|
+|---                                   |---    |
+|protoc                                |3.9.2  |
+|golang/protobuf                       |1.3.2  |
+|grpc                                  |1.25.1 |
+|postgres                              |11.6   |
+|nats                                  |2.12   |
 
 Optional requirements are as follow:
 
-|Requirement                |Version|
-|---                        |---    |
-|prometheus + grafana       |latest |
+|Requirement                           |Version|
+|---                                   |---    |
+|prometheus + grafana                  |latest |
 
 To build an executable instance of the project, run:
 
@@ -43,3 +43,12 @@ Also to run tests you can use:
 And to build a docker image:
 
 `./scripts/dockerize.sh`
+
+## Interface Documentation
+
+Kiosk provides two different types of interfaces, one is based on gRPC as protobuf definitions and the other is REST API.
+
+|Type                                                      |
+|---                                                       |
+|[Protobuf Definitions](api/protobuf-spec)                 |
+|[REST API Specification](api/rest-spec/README.md)         |
