@@ -1,3 +1,3 @@
 # Kiosk
 
-Scalable Ticketing System
+Typical Ticketing System
