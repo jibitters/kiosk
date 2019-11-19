@@ -26,16 +26,6 @@ message Ticket {
     string updated_at = 11;
 }
 
-message Comment {
-    int64 id = 1;
-    int64 ticket_id = 2;
-    string owner = 3;
-    string content = 4;
-    string metadata = 5;
-    string created_at = 6;
-    string updated_at = 7;
-}
-
 enum TicketImportanceLevel {
     LOW = 0;
     MEDIUM = 1;
@@ -46,6 +36,16 @@ enum TicketImportanceLevel {
 enum TicketStatus {
     NEW = 0;
     RESOLVED = 1;
-    CLOSED = 3;
-    BLOCKED = 2;
+    CLOSED = 2;
+    BLOCKED = 3;
+}
+
+message Comment {
+    int64 id = 1;
+    int64 ticket_id = 2;
+    string owner = 3;
+    string content = 4;
+    string metadata = 5;
+    string created_at = 6;
+    string updated_at = 7;
 }
