@@ -169,11 +169,11 @@ func (service *TicketService) validateFilter(request *rpc.FilterTicketsRequest) 
 	}
 
 	if request.Page.Number < 1 {
-		return status.Error(codes.InvalidArgument, "filter.invalid_page_number")
+		return status.Error(codes.InvalidArgument, "filter_tickets.invalid_page_number")
 	}
 
 	if request.Page.Size < 1 || request.Page.Number > 150 {
-		return status.Error(codes.InvalidArgument, "filter.invalid_page_size")
+		return status.Error(codes.InvalidArgument, "filter_tickets.invalid_page_size")
 	}
 
 	return nil
@@ -325,7 +325,7 @@ func (service *TicketService) filter(context context.Context, request *rpc.Filte
 	rows, err := service.db.Query(context, query, args...)
 	if err != nil {
 		service.logger.Error("error on filtering tickets: %v", err)
-		return nil, status.Error(codes.Internal, "filter.failed")
+		return nil, status.Error(codes.Internal, "filter_tickets.failed")
 	}
 	defer rows.Close()
 
@@ -352,7 +352,7 @@ func (service *TicketService) filter(context context.Context, request *rpc.Filte
 		)
 		if err != nil {
 			service.logger.Error("error on scanning rows: %v", err)
-			return nil, status.Error(codes.Internal, "filter.failed")
+			return nil, status.Error(codes.Internal, "filter_tickets.failed")
 		}
 
 		tickets = append(tickets, ticket)
@@ -373,7 +373,7 @@ func (service *TicketService) filter(context context.Context, request *rpc.Filte
 		rows, err = service.db.Query(context, query, args...)
 		if err != nil {
 			service.logger.Error("error on reading comments: %v", err)
-			return nil, status.Error(codes.Internal, "filter.failed")
+			return nil, status.Error(codes.Internal, "filter_tickets.failed")
 		}
 		defer rows.Close()
 
@@ -389,7 +389,7 @@ func (service *TicketService) filter(context context.Context, request *rpc.Filte
 			err := rows.Scan(&id, &ticketID, &owner, &content, &metadata, createdAt, updatedAt)
 			if err != nil {
 				service.logger.Error("error on scanning rows: %v", err)
-				return nil, status.Error(codes.Internal, "filter.failed")
+				return nil, status.Error(codes.Internal, "filter_tickets.failed")
 			}
 
 			ticketsMap[ticketID].Comments = append(ticketsMap[ticketID].Comments, &rpc.Comment{
