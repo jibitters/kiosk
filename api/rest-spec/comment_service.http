@@ -9,12 +9,11 @@ Content-Type: application/json; charset=utf-8
     "metadata": "{\"ip\": \"185.186.187.188\"}"
 }
 
-# Notes
-# owner: Who is this comment from?
+Notes
+owner: Who is this comment from?
 
-# Response
-# HTTP/1.1 200 OK
-# {}
+HTTP/1.1 200 OK
+{}
 
 ### Update comment request. Updates an already exists comment with provided values.
 PUT http://localhost:8080/v1/comments
@@ -25,13 +24,11 @@ Content-Type: application/json; charset=utf-8
     "metadata": ""
 }
 
-# Response
-# HTTP/1.1 200 OK
-# {}
+HTTP/1.1 200 OK
+{}
 
 ### Delete comment request.
 DELETE http://localhost:8080/v1/tickets/10
 
-# Response
-# HTTP/1.1 200 OK
-# {}
+HTTP/1.1 200 OK
+{}

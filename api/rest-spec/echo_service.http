@@ -6,8 +6,7 @@ Content-Type: application/json; charset=utf-8
     "content": "Hi"
 }
 
-# Response
-# HTTP/1.1 200 OK
-# {
-#   "content": "Hi"
-# }
+HTTP/1.1 200 OK
+{
+  "content": "Hi"
+}
