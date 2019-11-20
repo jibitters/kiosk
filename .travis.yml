@@ -1,0 +1,35 @@
+dist: bionic
+  addons:
+    snaps:
+      - name: protobuf
+        confinement: classic
+
+language: go
+
+go:
+  - 1.13.x
+
+stages:
+  - build
+  - test
+  # - name: deploy
+  #   if: branch = master
+
+jobs:
+  include:
+    - stage: build
+      before_script:
+        - go get -u github.com/golang/protobuf/protoc-gen-go
+      script:
+        - chmod +x ./scripts/build.sh && ./scripts/build.sh
+    - stage: test
+      before_script:
+        - go get -u github.com/golang/protobuf/protoc-gen-go
+      script:
+        - go generate ./cmd/kiosk/main.go
+        - golint -set_exit_status=1 ./...
+        - go vet ./...
+        - chmod +x ./scripts/test.sh && ./scripts/test.sh
+
+services:
+  - docker

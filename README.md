@@ -34,7 +34,7 @@ Optional requirements are as follow:
 
 To build an executable instance of the project, use:
 
-`./scripts/release.sh`
+`./scripts/build.sh`
 
 Also to run tests you can use the test.sh script (Note: Ensure docker is up and running):
 
