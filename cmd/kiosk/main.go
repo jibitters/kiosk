@@ -51,7 +51,12 @@ func main() {
 
 // Configures kiosk application instance based on provided configuration properties.
 func (k *kiosk) configure() {
-	k.config = configuration.Configure(k.logger, *config)
+	config, err := configuration.Configure(k.logger, *config)
+	if err != nil {
+		k.logger.Fatal("failed to load configurations file: %v", err)
+	}
+
+	k.config = config
 	k.logger = logging.NewWithLevel(k.config.Logger.Level)
 }
 
