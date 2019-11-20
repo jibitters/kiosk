@@ -70,7 +70,7 @@ func (pc *PostgresConfig) validate() {
 	}
 
 	if pc.Name == "" {
-		pc.Name = "nucleus"
+		pc.Name = "kiosk"
 	}
 
 	if pc.ConnectionTimeout <= 0 {
@@ -119,17 +119,17 @@ func (wc *WEBConfig) validate() {
 }
 
 // Configure reads a configuration file from provided file path and populates an instance of Config struct.
-func Configure(logger *logging.Logger, filePath string) *Config {
+func Configure(logger *logging.Logger, filePath string) (*Config, error) {
 	logger.Info("loading configurations file from %s", filePath)
 
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		logger.Fatal("failed to load configurations file: %v", err)
+		return nil, err
 	}
 
 	config := &Config{}
 	if err := json.Unmarshal(content, config); err != nil {
-		logger.Fatal("failed to parse configurations file: %v", err)
+		return nil, err
 	}
 
 	config.Application.validate()
@@ -138,5 +138,5 @@ func Configure(logger *logging.Logger, filePath string) *Config {
 	config.GRPC.validate()
 	config.WEB.validate()
 
-	return config
+	return config, nil
 }
