@@ -1,6 +1,6 @@
 # Kiosk
 
-Typical Ticketing System
+[![Build Status](https://travis-ci.org/jibitters/kiosk.svg?branch=develop)](https://travis-ci.org/jibitters/kiosk)
 
 ## About
 
