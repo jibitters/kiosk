@@ -1,8 +1,9 @@
 dist: bionic
-  addons:
-    snaps:
-      - name: protobuf
-        confinement: classic
+
+addons:
+  snaps:
+    - name: protobuf
+      confinement: classic
 
 language: go
 
