@@ -32,17 +32,17 @@ Optional requirements are as follow:
 |---                                   |---    |
 |prometheus + grafana                  |latest |
 
-To build an executable instance of the project, run:
+To build an executable instance of the project, use:
 
 `./scripts/release.sh`
 
-Also to run tests you can use:
+Also to run tests you can use the test.sh script (Note: Ensure docker is up and running):
 
 `./scripts/test.sh`
 
 And to build a docker image:
 
-`./scripts/dockerize.sh`
+`docker build -t image:tag .`
 
 ## Interface Documentation
 
