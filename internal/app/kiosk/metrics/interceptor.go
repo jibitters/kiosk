@@ -14,18 +14,18 @@ import (
 )
 
 // UnaryInterceptor intercepts each incoming request, record some metrics and exposes them to the prometheus endpoint.
-func UnaryInterceptor(metrics *Metrics) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func UnaryInterceptor(metrics *Metrics) func(context context.Context, request interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(context context.Context, request interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		start := time.Now()
-		resp, err := handler(ctx, req)
+		response, err := handler(context, request)
 		end := time.Now()
-		recordMetrics(metrics, start, end, info, req, err)
+		recordMetrics(metrics, start, end, info, err)
 
-		return resp, err
+		return response, err
 	}
 }
 
-func recordMetrics(metrics *Metrics, start time.Time, end time.Time, info *grpc.UnaryServerInfo, req interface{}, err error) {
+func recordMetrics(metrics *Metrics, start time.Time, end time.Time, info *grpc.UnaryServerInfo, err error) {
 	service, method := extractServiceMethod(info.FullMethod)
 	code, message := extractCodeMessage(err)
 	responseStatus := extractStatus(err)
@@ -57,10 +57,10 @@ func extractCodeMessage(err error) (string, string) {
 }
 
 func extractStatus(err error) string {
-	state := "Successful"
+	status := "Successful"
 	if err != nil {
-		state = "Failed"
+		status = "Failed"
 	}
 
-	return state
+	return status
 }
