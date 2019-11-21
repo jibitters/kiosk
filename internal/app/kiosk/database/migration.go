@@ -33,17 +33,14 @@ func Migrate(config *configuration.Config) error {
 	return nil
 }
 
-// Opens a database connection.
 func openConnection(connection string) (*sql.DB, error) {
 	return sql.Open("postgres", connection)
 }
 
-// Pings an opened database connection to check whether the connection established or not.
 func pingConnection(db *sql.DB) error {
 	return db.Ping()
 }
 
-// Runs database migration.
 func migrate(db *sql.DB, migrationDirectory string) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -66,7 +63,6 @@ func migrate(db *sql.DB, migrationDirectory string) error {
 	return nil
 }
 
-// Creates and returns database connection string required by database drivers.
 func buildConnectionString(host string, port int, name, user, password string, connectionTimeout int, sslMode string) string {
 	return fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s connect_timeout=%d sslmode=%s",

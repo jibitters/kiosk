@@ -38,7 +38,6 @@ func Listen(config *configuration.Config, logger *logging.Logger, db *pgxpool.Po
 	return server, nil
 }
 
-// Creates an instance of gRPC server.
 func server(config *configuration.Config) *grpc.Server {
 	if config.Application.Metrics {
 		return grpc.NewServer(grpc.UnaryInterceptor(metrics.UnaryInterceptor(metrics.NewMetrics())))
@@ -47,7 +46,6 @@ func server(config *configuration.Config) *grpc.Server {
 	return grpc.NewServer()
 }
 
-// Enables metrics endpoint for prometheus server to scrape.
 func enableMetricsEndpoint(host string, port int) {
 	http.Handle("/metrics", promhttp.Handler())
 	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
