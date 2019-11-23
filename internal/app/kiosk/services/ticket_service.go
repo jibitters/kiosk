@@ -170,7 +170,7 @@ func (service *TicketService) validateFilter(request *rpc.FilterTicketsRequest) 
 		return status.Error(codes.InvalidArgument, "filter_tickets.invalid_page_number")
 	}
 
-	if request.Page.Size < 1 || request.Page.Number > 150 {
+	if request.Page.Size < 1 || request.Page.Size > 200 {
 		return status.Error(codes.InvalidArgument, "filter_tickets.invalid_page_size")
 	}
 

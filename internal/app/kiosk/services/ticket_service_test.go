@@ -125,15 +125,7 @@ func setupPostgresAndRunMigration() (testcontainers.Container, *pgxpool.Pool, er
 }
 
 func TestCreate_InvalidArgument(t *testing.T) {
-	container, db, err := setupPostgresAndRunMigration()
-	if err != nil {
-		t.Logf("Error : %v", err)
-		t.FailNow()
-	}
-	defer containers.CloseContainer(container)
-	defer db.Close()
-
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(logging.New(logging.DebugLevel), nil)
 
 	ticket := &rpc.Ticket{
 		Owner:                 "09203091992",
@@ -264,15 +256,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestRead_InvalidArgument(t *testing.T) {
-	container, db, err := setupPostgresAndRunMigration()
-	if err != nil {
-		t.Logf("Error : %v", err)
-		t.FailNow()
-	}
-	defer containers.CloseContainer(container)
-	defer db.Close()
-
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(logging.New(logging.DebugLevel), nil)
 
 	id := &rpc.Id{Id: 0}
 	readShouldReturnInvalidArgument(t, service, id, "read_ticket.invalid_id")
@@ -415,15 +399,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestUpdate_InvalidArgument(t *testing.T) {
-	container, db, err := setupPostgresAndRunMigration()
-	if err != nil {
-		t.Logf("Error : %v", err)
-		t.FailNow()
-	}
-	defer containers.CloseContainer(container)
-	defer db.Close()
-
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(logging.New(logging.DebugLevel), nil)
 
 	ticket := &rpc.Ticket{
 		Id:           0,
@@ -552,15 +528,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestDelete_InvalidArgument(t *testing.T) {
-	container, db, err := setupPostgresAndRunMigration()
-	if err != nil {
-		t.Logf("Error : %v", err)
-		t.FailNow()
-	}
-	defer containers.CloseContainer(container)
-	defer db.Close()
-
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(logging.New(logging.DebugLevel), nil)
 
 	id := &rpc.Id{Id: 0}
 	deleteShouldReturnInvalidArgument(t, service, id, "delete_ticket.invalid_id")
@@ -634,6 +602,59 @@ func TestDelete(t *testing.T) {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
+}
+
+func TestFilter_InvalidArgument(t *testing.T) {
+	service := NewTicketService(logging.New(logging.DebugLevel), nil)
+
+	filter := &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 0, Size: 10},
+	}
+	filterShouldReturnInvalidArgument(t, service, filter, "filter_tickets.invalid_page_number")
+
+	filter = &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 0},
+	}
+	filterShouldReturnInvalidArgument(t, service, filter, "filter_tickets.invalid_page_size")
+
+	filter = &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 201},
+	}
+	filterShouldReturnInvalidArgument(t, service, filter, "filter_tickets.invalid_page_size")
+}
+
+func TestFilter_DatabaseConnectionFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	filter := &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 10},
+	}
+	filterShouldReturnInternal(t, service, filter, "filter_tickets.failed")
+}
+
+func TestFilter_DatabaseNetworkFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	filter := &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 10},
+	}
+	filterShouldReturnInternal(t, service, filter, "filter_tickets.failed")
 }
 
 func createShouldReturnInvalidArgument(t *testing.T, service *TicketService, ticket *rpc.Ticket, message string) {
@@ -854,6 +875,54 @@ func deleteShouldReturnInvalidArgument(t *testing.T, service *TicketService, id 
 
 func deleteShouldReturnInternal(t *testing.T, service *TicketService, id *rpc.Id, message string) {
 	_, err := service.Delete(context.Background(), id)
+	if err == nil {
+		t.Logf("Expected error here!")
+		t.FailNow()
+	}
+
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Logf("The returned error is not compatible with gRPC error types.")
+		t.FailNow()
+	}
+
+	if status.Code() != codes.Internal {
+		t.Logf("Actual: %v Expected: %v", status.Code(), codes.Internal)
+		t.FailNow()
+	}
+
+	if status.Message() != message {
+		t.Logf("Actual: %v Expected: %v", status.Message(), message)
+		t.FailNow()
+	}
+}
+
+func filterShouldReturnInvalidArgument(t *testing.T, service *TicketService, filter *rpc.FilterTicketsRequest, message string) {
+	_, err := service.Filter(context.Background(), filter)
+	if err == nil {
+		t.Logf("Expected error here!")
+		t.FailNow()
+	}
+
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Logf("The returned error is not compatible with gRPC error types.")
+		t.FailNow()
+	}
+
+	if status.Code() != codes.InvalidArgument {
+		t.Logf("Actual: %v Expected: %v", status.Code(), codes.InvalidArgument)
+		t.FailNow()
+	}
+
+	if status.Message() != message {
+		t.Logf("Actual: %v Expected: %v", status.Message(), message)
+		t.FailNow()
+	}
+}
+
+func filterShouldReturnInternal(t *testing.T, service *TicketService, filter *rpc.FilterTicketsRequest, message string) {
+	_, err := service.Filter(context.Background(), filter)
 	if err == nil {
 		t.Logf("Expected error here!")
 		t.FailNow()
