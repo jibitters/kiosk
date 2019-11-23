@@ -23,3 +23,6 @@
 
 # gRPC generated code
 g/
+
+# Code coverage results
+coverage.txt

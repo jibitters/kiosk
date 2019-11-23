@@ -26,6 +26,8 @@ jobs:
         - golint -set_exit_status=1 ./...
         - go vet ./...
         - chmod +x ./scripts/test.sh && ./scripts/test.sh
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
 
 services:
   - docker
