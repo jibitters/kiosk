@@ -293,6 +293,36 @@ func TestRead_Notfound(t *testing.T) {
 	readShouldReturnNotfound(t, service, id, "read_ticket.not_found")
 }
 
+func TestRead_DatabaseConnectionFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	id := &rpc.Id{Id: 1}
+	readShouldReturnInternal(t, service, id, "read_ticket.failed")
+}
+
+func TestRead_DatabaseNetworkFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	id := &rpc.Id{Id: 1}
+	readShouldReturnInternal(t, service, id, "read_ticket.failed")
+}
+
 func TestRead(t *testing.T) {
 	container, db, err := setupPostgresAndRunMigration()
 	if err != nil {
@@ -380,6 +410,143 @@ func TestRead(t *testing.T) {
 	parsedUpdatedAtTime, _ := time.Parse(time.RFC3339Nano, response.UpdatedAt)
 	if !time.Now().UTC().After(parsedUpdatedAtTime) {
 		t.Logf("Updated at must be before now().")
+		t.FailNow()
+	}
+}
+
+func TestUpdate_InvalidArgument(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	ticket := &rpc.Ticket{
+		Id:           0,
+		TicketStatus: rpc.TicketStatus_NEW,
+	}
+	updateShouldReturnInvalidArgument(t, service, ticket, "update_ticket.invalid_id")
+
+	ticket = &rpc.Ticket{
+		Id:           1,
+		TicketStatus: rpc.TicketStatus_NEW,
+	}
+	updateShouldReturnInvalidArgument(t, service, ticket, "update_ticket.invalid_ticket_status")
+}
+
+func TestUpdate_Notfound(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	ticket := &rpc.Ticket{
+		Id:           1,
+		TicketStatus: rpc.TicketStatus_RESOLVED,
+	}
+	updateShouldReturnNotfound(t, service, ticket, "update_ticket.not_found")
+}
+
+func TestUpdate_DatabaseConnectionFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	ticket := &rpc.Ticket{
+		Id:           1,
+		TicketStatus: rpc.TicketStatus_RESOLVED,
+	}
+	updateShouldReturnInternal(t, service, ticket, "update_ticket.failed")
+}
+
+func TestUpdate_DatabaseNetworkFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	ticket := &rpc.Ticket{
+		Id:           1,
+		TicketStatus: rpc.TicketStatus_RESOLVED,
+	}
+	updateShouldReturnInternal(t, service, ticket, "update_ticket.failed")
+}
+
+func TestUpdate(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	ticket := &rpc.Ticket{
+		Issuer:                "Jibit",
+		Owner:                 "09203091992",
+		Subject:               "Documentation",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_HIGH,
+		TicketStatus:          rpc.TicketStatus_NEW,
+	}
+
+	if _, err := service.Create(context.Background(), ticket); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	id := &rpc.Id{Id: 1}
+	inserted, err := service.Read(context.Background(), id)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	ticket.Id = 1
+	ticket.TicketStatus = rpc.TicketStatus_RESOLVED
+	if _, err := service.Update(context.Background(), ticket); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	updated, err := service.Read(context.Background(), id)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if updated.TicketStatus != rpc.TicketStatus_RESOLVED {
+		t.Logf("Actual: %v Expected: %v", updated.TicketStatus, rpc.TicketStatus_RESOLVED)
+		t.FailNow()
+	}
+
+	insertedUpdatedAtTime, _ := time.Parse(time.RFC3339Nano, inserted.UpdatedAt)
+	updatedUpdatedAtTime, _ := time.Parse(time.RFC3339Nano, updated.UpdatedAt)
+	if !updatedUpdatedAtTime.After(insertedUpdatedAtTime) {
+		t.Logf("Updated at column not updated properly.")
 		t.FailNow()
 	}
 }
@@ -482,6 +649,78 @@ func readShouldReturnInternal(t *testing.T, service *TicketService, id *rpc.Id, 
 
 func readShouldReturnNotfound(t *testing.T, service *TicketService, id *rpc.Id, message string) {
 	_, err := service.Read(context.Background(), id)
+	if err == nil {
+		t.Logf("Expected error here!")
+		t.FailNow()
+	}
+
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Logf("The returned error is not compatible with gRPC error types.")
+		t.FailNow()
+	}
+
+	if status.Code() != codes.NotFound {
+		t.Logf("Actual: %v Expected: %v", status.Code(), codes.NotFound)
+		t.FailNow()
+	}
+
+	if status.Message() != message {
+		t.Logf("Actual: %v Expected: %v", status.Message(), message)
+		t.FailNow()
+	}
+}
+
+func updateShouldReturnInvalidArgument(t *testing.T, service *TicketService, ticket *rpc.Ticket, message string) {
+	_, err := service.Update(context.Background(), ticket)
+	if err == nil {
+		t.Logf("Expected error here!")
+		t.FailNow()
+	}
+
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Logf("The returned error is not compatible with gRPC error types.")
+		t.FailNow()
+	}
+
+	if status.Code() != codes.InvalidArgument {
+		t.Logf("Actual: %v Expected: %v", status.Code(), codes.InvalidArgument)
+		t.FailNow()
+	}
+
+	if status.Message() != message {
+		t.Logf("Actual: %v Expected: %v", status.Message(), message)
+		t.FailNow()
+	}
+}
+
+func updateShouldReturnInternal(t *testing.T, service *TicketService, ticket *rpc.Ticket, message string) {
+	_, err := service.Update(context.Background(), ticket)
+	if err == nil {
+		t.Logf("Expected error here!")
+		t.FailNow()
+	}
+
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Logf("The returned error is not compatible with gRPC error types.")
+		t.FailNow()
+	}
+
+	if status.Code() != codes.Internal {
+		t.Logf("Actual: %v Expected: %v", status.Code(), codes.InvalidArgument)
+		t.FailNow()
+	}
+
+	if status.Message() != message {
+		t.Logf("Actual: %v Expected: %v", status.Message(), message)
+		t.FailNow()
+	}
+}
+
+func updateShouldReturnNotfound(t *testing.T, service *TicketService, ticket *rpc.Ticket, message string) {
+	_, err := service.Update(context.Background(), ticket)
 	if err == nil {
 		t.Logf("Expected error here!")
 		t.FailNow()
