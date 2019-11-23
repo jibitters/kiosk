@@ -1,6 +1,7 @@
 # Kiosk
 
 [![Build Status](https://travis-ci.org/jibitters/kiosk.svg?branch=develop)](https://travis-ci.org/jibitters/kiosk)
+[![codecov](https://codecov.io/gh/jibitters/kiosk/branch/develop/graph/badge.svg)](https://codecov.io/gh/jibitters/kiosk)
 
 ## About
 
