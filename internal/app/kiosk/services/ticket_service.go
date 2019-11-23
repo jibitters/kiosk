@@ -100,8 +100,6 @@ func (service *TicketService) Filter(context context.Context, request *rpc.Filte
 }
 
 func (service *TicketService) validateCreate(request *rpc.Ticket) error {
-	request.TicketStatus = rpc.TicketStatus_NEW
-
 	request.Issuer = strings.TrimSpace(request.Issuer)
 	request.Owner = strings.TrimSpace(request.Owner)
 	request.Subject = strings.TrimSpace(request.Subject)

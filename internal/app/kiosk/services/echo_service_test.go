@@ -10,15 +10,6 @@ import (
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
 )
 
-func TestNewEchoService(t *testing.T) {
-	service := NewEchoService()
-
-	if service == nil {
-		t.Logf("Service initialization returned <nil> reference")
-		t.FailNow()
-	}
-}
-
 func TestEcho(t *testing.T) {
 	service := NewEchoService()
 	request := rpc.Message{Content: "echo"}
