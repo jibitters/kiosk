@@ -551,6 +551,91 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+func TestDelete_InvalidArgument(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	id := &rpc.Id{Id: 0}
+	deleteShouldReturnInvalidArgument(t, service, id, "delete_ticket.invalid_id")
+}
+
+func TestDelete_DatabaseConnectionFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	id := &rpc.Id{Id: 1}
+	deleteShouldReturnInternal(t, service, id, "delete_ticket.failed")
+}
+
+func TestDelete_DatabaseNetworkFailure(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	id := &rpc.Id{Id: 1}
+	deleteShouldReturnInternal(t, service, id, "delete_ticket.failed")
+}
+
+func TestDelete(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	ticket := &rpc.Ticket{
+		Issuer:                "Jibit",
+		Owner:                 "09203091992",
+		Subject:               "Documentation",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_HIGH,
+		TicketStatus:          rpc.TicketStatus_NEW,
+	}
+
+	if _, err := service.Create(context.Background(), ticket); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	id := &rpc.Id{Id: 1}
+	if _, err := service.Delete(context.Background(), id); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	readShouldReturnNotfound(t, service, id, "read_ticket.not_found")
+
+	if _, err := service.Delete(context.Background(), id); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+}
+
 func createShouldReturnInvalidArgument(t *testing.T, service *TicketService, ticket *rpc.Ticket, message string) {
 	_, err := service.Create(context.Background(), ticket)
 	if err == nil {
@@ -734,6 +819,54 @@ func updateShouldReturnNotfound(t *testing.T, service *TicketService, ticket *rp
 
 	if status.Code() != codes.NotFound {
 		t.Logf("Actual: %v Expected: %v", status.Code(), codes.NotFound)
+		t.FailNow()
+	}
+
+	if status.Message() != message {
+		t.Logf("Actual: %v Expected: %v", status.Message(), message)
+		t.FailNow()
+	}
+}
+
+func deleteShouldReturnInvalidArgument(t *testing.T, service *TicketService, id *rpc.Id, message string) {
+	_, err := service.Delete(context.Background(), id)
+	if err == nil {
+		t.Logf("Expected error here!")
+		t.FailNow()
+	}
+
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Logf("The returned error is not compatible with gRPC error types.")
+		t.FailNow()
+	}
+
+	if status.Code() != codes.InvalidArgument {
+		t.Logf("Actual: %v Expected: %v", status.Code(), codes.InvalidArgument)
+		t.FailNow()
+	}
+
+	if status.Message() != message {
+		t.Logf("Actual: %v Expected: %v", status.Message(), message)
+		t.FailNow()
+	}
+}
+
+func deleteShouldReturnInternal(t *testing.T, service *TicketService, id *rpc.Id, message string) {
+	_, err := service.Delete(context.Background(), id)
+	if err == nil {
+		t.Logf("Expected error here!")
+		t.FailNow()
+	}
+
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Logf("The returned error is not compatible with gRPC error types.")
+		t.FailNow()
+	}
+
+	if status.Code() != codes.Internal {
+		t.Logf("Actual: %v Expected: %v", status.Code(), codes.Internal)
 		t.FailNow()
 	}
 
