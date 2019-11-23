@@ -22,7 +22,6 @@ The requirements to test and build the project are as follow:
 |---                                   |---    |
 |protoc                                |3.9.2  |
 |golang/protobuf                       |1.3.2  |
-|grpc                                  |1.25.1 |
 |postgres                              |11.6   |
 |nats                                  |2.12   |
 
@@ -30,7 +29,8 @@ Optional requirements are as follow:
 
 |Requirement                           |Version|
 |---                                   |---    |
-|prometheus + grafana                  |latest |
+|prometheus                            |latest |
+|grafana                               |latest |
 
 To build an executable instance of the project, use:
 
