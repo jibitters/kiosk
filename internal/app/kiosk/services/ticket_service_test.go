@@ -657,6 +657,352 @@ func TestFilter_DatabaseNetworkFailure(t *testing.T) {
 	filterShouldReturnInternal(t, service, filter, "filter_tickets.failed")
 }
 
+func TestFilter(t *testing.T) {
+	container, db, err := setupPostgresAndRunMigration()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(container)
+	defer db.Close()
+
+	service := NewTicketService(logging.New(logging.DebugLevel), db)
+
+	// Inserting first ticket.
+	first := &rpc.Ticket{
+		Issuer:                "Jibit",
+		Owner:                 "09203091992",
+		Subject:               "Subject1",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_LOW,
+		TicketStatus:          rpc.TicketStatus_NEW,
+	}
+	if _, err := service.Create(context.Background(), first); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	// Inserting second ticket.
+	second := &rpc.Ticket{
+		Issuer:                "Jibit",
+		Owner:                 "09203091992",
+		Subject:               "Subject2",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_LOW,
+		TicketStatus:          rpc.TicketStatus_NEW,
+	}
+	if _, err := service.Create(context.Background(), second); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	// Inserting third ticket.
+	third := &rpc.Ticket{
+		Issuer:                "JIBit",
+		Owner:                 "09203091992",
+		Subject:               "Subject3",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_LOW,
+		TicketStatus:          rpc.TicketStatus_NEW,
+	}
+	if _, err := service.Create(context.Background(), third); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	// Inserting fourth ticket.
+	fourth := &rpc.Ticket{
+		Issuer:                "JIBit",
+		Owner:                 "09203091993",
+		Subject:               "Subject4",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_LOW,
+		TicketStatus:          rpc.TicketStatus_NEW,
+	}
+	if _, err := service.Create(context.Background(), fourth); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	// Inserting fifth ticket.
+	fifth := &rpc.Ticket{
+		Issuer:                "JIBit",
+		Owner:                 "09203091994",
+		Subject:               "Subject5",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_CRITICAL,
+		TicketStatus:          rpc.TicketStatus_NEW,
+	}
+	if _, err := service.Create(context.Background(), fifth); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	filter := &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 10},
+	}
+	response, err := service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 4 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 4)
+		t.FailNow()
+	}
+
+	if response.Tickets[0].Subject != "Subject4" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject4")
+		t.FailNow()
+	}
+
+	if response.Tickets[1].Subject != "Subject3" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject3")
+		t.FailNow()
+	}
+
+	if response.Tickets[2].Subject != "Subject2" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject2")
+		t.FailNow()
+	}
+
+	if response.Tickets[3].Subject != "Subject1" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject1")
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != false {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 4},
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 4 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 4)
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != false {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 3},
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 3 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 3)
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != true {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, true)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		Issuer: "JIBit",
+		Page:   &rpc.Page{Number: 2, Size: 1},
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 1 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 1)
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != false {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		Owner: "09203091992",
+		Page:  &rpc.Page{Number: 1, Size: 2},
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 2 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 2)
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != true {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, true)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		Page:                  &rpc.Page{Number: 1, Size: 2},
+		TicketImportanceLevel: rpc.TicketImportanceLevel_CRITICAL,
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 1 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 1)
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != false {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		Owner:                 "09203091992",
+		Page:                  &rpc.Page{Number: 1, Size: 2},
+		TicketImportanceLevel: rpc.TicketImportanceLevel_CRITICAL,
+		TicketStatus:          rpc.TicketStatus_CLOSED,
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 0 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 0)
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != false {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		FromDate: time.Now().UTC().Format(time.RFC3339Nano),
+		Page:     &rpc.Page{Number: 1, Size: 10},
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 0 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 0)
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != false {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
+		t.FailNow()
+	}
+}
+
 func createShouldReturnInvalidArgument(t *testing.T, service *TicketService, ticket *rpc.Ticket, message string) {
 	_, err := service.Create(context.Background(), ticket)
 	if err == nil {
