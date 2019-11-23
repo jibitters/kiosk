@@ -18,7 +18,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-const firstMigration = `
+const firstMigrationSchema = `
 -- Tickets table definition.
 	CREATE TABLE tickets (
 	    id                                 BIGSERIAL NOT NULL,
@@ -53,7 +53,7 @@ const firstMigration = `
 	CREATE INDEX idx_comments_ticket_id ON comments (ticket_id);
 	CREATE INDEX idx_comments_owner_created_at ON comments (owner, created_at DESC);`
 
-func startPostgresContainer() (testcontainers.Container, int, error) {
+func runPostgresContainer() (testcontainers.Container, int, error) {
 	containerPort, err := nat.NewPort("tcp", "5432")
 	if err != nil {
 		return nil, 0, err
@@ -89,7 +89,7 @@ func TestBuildConnectionString(t *testing.T) {
 }
 
 func TestMigrate(t *testing.T) {
-	container, port, err := startPostgresContainer()
+	container, port, err := runPostgresContainer()
 	if err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
@@ -109,7 +109,7 @@ func TestMigrate(t *testing.T) {
 	}
 	defer first.Close()
 
-	first.WriteString(firstMigration)
+	first.WriteString(firstMigrationSchema)
 
 	config := &configuration.Config{Postgres: configuration.PostgresConfig{
 		Host:               "localhost",
@@ -143,7 +143,7 @@ func TestMigrate_ConnectionFailure(t *testing.T) {
 	}
 	defer first.Close()
 
-	first.WriteString(firstMigration)
+	first.WriteString(firstMigrationSchema)
 
 	config := &configuration.Config{Postgres: configuration.PostgresConfig{
 		Host:               "localhost",
@@ -164,7 +164,7 @@ func TestMigrate_ConnectionFailure(t *testing.T) {
 }
 
 func TestMigrate_SQLSyntaxError(t *testing.T) {
-	container, port, err := startPostgresContainer()
+	container, port, err := runPostgresContainer()
 	if err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
@@ -186,8 +186,8 @@ func TestMigrate_SQLSyntaxError(t *testing.T) {
 
 	first.WriteString(`
 	-- Tickets table definition.
-	CREATE TABLE tickets (
-	    id                                 BIGSERIA NOT NULL,
+	CRETE TABLE tickets (
+	    id                                 BIGSERIAL NOT NULL,
 	    issuer                             VARCHAR(40) NOT NULL,
 	    owner                              VARCHAR(40) NOT NULL,
 	    subject                            VARCHAR(255) NOT NULL,
@@ -219,7 +219,7 @@ func TestMigrate_SQLSyntaxError(t *testing.T) {
 }
 
 func TestMigrate_NoChange(t *testing.T) {
-	container, port, err := startPostgresContainer()
+	container, port, err := runPostgresContainer()
 	if err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
@@ -239,7 +239,7 @@ func TestMigrate_NoChange(t *testing.T) {
 	}
 	defer first.Close()
 
-	first.WriteString(firstMigration)
+	first.WriteString(firstMigrationSchema)
 
 	config := &configuration.Config{Postgres: configuration.PostgresConfig{
 		Host:               "localhost",

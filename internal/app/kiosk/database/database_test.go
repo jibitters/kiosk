@@ -11,7 +11,7 @@ import (
 )
 
 func TestConnectToDatabase(t *testing.T) {
-	container, port, err := startPostgresContainer()
+	container, port, err := runPostgresContainer()
 	if err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
@@ -58,7 +58,7 @@ func TestConnectToDatabase_ParseError(t *testing.T) {
 }
 
 func TestConnectToDatabase_InvalidCredentials(t *testing.T) {
-	container, port, err := startPostgresContainer()
+	container, port, err := runPostgresContainer()
 	if err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
