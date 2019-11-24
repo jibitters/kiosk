@@ -104,7 +104,7 @@ func (service *CommentService) insertOne(context context.Context, comment *rpc.C
 
 	if err != nil {
 		if strings.Contains(err.Error(), "comments_ticket_id_fkey") {
-			return status.Error(codes.InvalidArgument, "create_comment.ticket_id_not_exists")
+			return status.Error(codes.InvalidArgument, "create_comment.ticket_not_exists")
 		}
 
 		service.logger.Error("error on inserting new comment: %v", err)
@@ -124,7 +124,7 @@ func (service *CommentService) updateOne(context context.Context, comment *rpc.C
 	}
 
 	if commandTag.RowsAffected() != 1 {
-		return status.Error(codes.NotFound, "update_comment.ticket_not_found")
+		return status.Error(codes.NotFound, "update_comment.not_found")
 	}
 
 	return nil

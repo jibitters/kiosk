@@ -69,6 +69,8 @@ The code field and its possible values are described on the following list:
 
 - create_comment.failed
 
+- create_comment.ticket_not_exists
+
 --
 
 - update_comment.failed
