@@ -1,8 +1,12 @@
 # Kiosk
 
-[![Build Status](https://travis-ci.org/jibitters/kiosk.svg?branch=master)](https://travis-ci.org/jibitters/kiosk)
-[![codecov](https://codecov.io/gh/jibitters/kiosk/branch/master/graph/badge.svg)](https://codecov.io/gh/jibitters/kiosk)
+[Release-URL]: https://github.com/jibitters/kiosk/releases/tag/v0.0.1
+[Release-Image]: https://img.shields.io/badge/release-v0.0.1-1eb0fc.svg
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![build](https://travis-ci.org/jibitters/kiosk.svg?branch=master)](https://travis-ci.org/jibitters/kiosk)
+[![codecov](https://codecov.io/gh/jibitters/kiosk/branch/master/graph/badge.svg)](https://codecov.io/gh/jibitters/kiosk)
+[![release](Release-Image)](Release-URL)
 
 ## About
 
