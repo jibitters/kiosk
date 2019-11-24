@@ -667,8 +667,9 @@ func TestFilter(t *testing.T) {
 	defer db.Close()
 
 	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	commentService := NewCommentService(logging.New(logging.DebugLevel), db)
 
-	// Inserting first ticket.
+	// Inserting first ticket and its single comment.
 	first := &rpc.Ticket{
 		Issuer:                "Jibit",
 		Owner:                 "09203091992",
@@ -679,6 +680,18 @@ func TestFilter(t *testing.T) {
 		TicketStatus:          rpc.TicketStatus_NEW,
 	}
 	if _, err := service.Create(context.Background(), first); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	comment := &rpc.Comment{
+		TicketId: 1,
+		Owner:    "support@jibit.ir",
+		Content:  "Hello, please find API related docs on website.",
+		Metadata: "{\"owner_ip\": \"185.186.187.188\"}",
+	}
+
+	if err := commentService.insertOne(context.Background(), comment); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
