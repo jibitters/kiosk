@@ -179,7 +179,7 @@ func TestCreate_InvalidArgument(t *testing.T) {
 		TicketImportanceLevel: rpc.TicketImportanceLevel_HIGH,
 		TicketStatus:          rpc.TicketStatus_RESOLVED,
 	}
-	createShouldReturnInvalidArgument(t, service, ticket, "create_ticket.invalid_status")
+	createShouldReturnInvalidArgument(t, service, ticket, "create_ticket.invalid_ticket_status")
 }
 
 func TestCreate_DatabaseConnectionFailure(t *testing.T) {

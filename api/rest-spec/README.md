@@ -25,7 +25,7 @@ The code field and its possible values are described on the following list:
 
 - create_ticket.empty_content
 
-- create_ticket.invalid_status
+- create_ticket.invalid_ticket_status
 
 - create_ticket.failed
 

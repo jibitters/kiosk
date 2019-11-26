@@ -123,7 +123,7 @@ func (service *TicketService) validateCreate(request *rpc.Ticket) error {
 	}
 
 	if request.TicketStatus != rpc.TicketStatus_NEW {
-		return status.Error(codes.InvalidArgument, "create_ticket.invalid_status")
+		return status.Error(codes.InvalidArgument, "create_ticket.invalid_ticket_status")
 	}
 
 	return nil
