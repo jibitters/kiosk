@@ -14,12 +14,13 @@ import (
 	"github.com/jibitters/kiosk/internal/app/kiosk/metrics"
 	"github.com/jibitters/kiosk/internal/app/kiosk/services"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 )
 
 // Listen creates a new gRPC server and listens on provided host and port.
-func Listen(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool) (*grpc.Server, error) {
+func Listen(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) (*grpc.Server, error) {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.GRPC.Host, config.GRPC.Port))
 	if err != nil {
 		return nil, err
@@ -27,8 +28,8 @@ func Listen(config *configuration.Config, logger *logging.Logger, db *pgxpool.Po
 
 	server := server(config)
 	rpc.RegisterEchoServiceServer(server, services.NewEchoService())
-	rpc.RegisterTicketServiceServer(server, services.NewTicketService(logger, db))
-	rpc.RegisterCommentServiceServer(server, services.NewCommentService(logger, db))
+	rpc.RegisterTicketServiceServer(server, services.NewTicketService(config, logger, db, nats))
+	rpc.RegisterCommentServiceServer(server, services.NewCommentService(config, logger, db, nats))
 
 	if config.Application.Metrics {
 		go enableMetricsEndpoint(config.Application.MetricsHost, config.Application.MetricsPort)

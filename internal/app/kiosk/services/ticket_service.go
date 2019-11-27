@@ -5,30 +5,45 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
+	notifiermodels "github.com/jibitters/kiosk/g/rpc/notifier"
+	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
+	natsclient "github.com/nats-io/nats.go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+const (
+	newTicketSMSTemplate          = "A new ticket with %s importance level created by %s. Please check the panel."
+	newTicketEmailSubjectTemplate = "A new ticket with %s Importance Level created by %s"
+	newTicketEmailBodyTemplate    = ""
+)
+
 // TicketService is the implementation of ticket related rpc methods.
 type TicketService struct {
+	config *configuration.Config
 	logger *logging.Logger
 	db     *pgxpool.Pool
+	nats   *natsclient.Conn
 }
 
 // NewTicketService creates and returns a new ready to use ticket service implementation.
-func NewTicketService(logger *logging.Logger, db *pgxpool.Pool) *TicketService {
+func NewTicketService(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) *TicketService {
 	return &TicketService{
+		config: config,
 		logger: logger,
 		db:     db,
+		nats:   nats,
 	}
 }
 
@@ -41,6 +56,8 @@ func (service *TicketService) Create(context context.Context, request *rpc.Ticke
 	if err := service.insertOne(context, request); err != nil {
 		return nil, err
 	}
+
+	service.notify(request)
 
 	return &empty.Empty{}, nil
 }
@@ -473,4 +490,56 @@ func buildFindAllCommentsQuery(tickets []*rpc.Ticket) (string, []interface{}) {
 	query.WriteString(`) ORDER BY created_at DESC`)
 
 	return query.String(), args
+}
+
+func (service *TicketService) notify(request *rpc.Ticket) {
+	switch request.TicketStatus {
+	case rpc.TicketStatus_NEW:
+		switch request.TicketImportanceLevel {
+		case rpc.TicketImportanceLevel_LOW:
+			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Low.Type]),
+				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:      newTicketEmailBodyTemplate,
+				Recipient: service.config.Notifications.Ticket.New.Low.Recipients,
+			})
+			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+
+		case rpc.TicketImportanceLevel_MEDIUM:
+			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Medium.Type]),
+				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:      newTicketEmailBodyTemplate,
+				Recipient: service.config.Notifications.Ticket.New.Medium.Recipients,
+			})
+			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+
+		case rpc.TicketImportanceLevel_HIGH:
+			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.High.Type]),
+				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:      newTicketEmailBodyTemplate,
+				Recipient: service.config.Notifications.Ticket.New.High.Recipients,
+			})
+			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+
+		case rpc.TicketImportanceLevel_CRITICAL:
+			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Critical.Type]),
+				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:      newTicketEmailBodyTemplate,
+				Recipient: service.config.Notifications.Ticket.New.Critical.Recipients,
+			})
+			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+
+		default:
+			service.logger.Warning("no notifier handler for %s importance level!", request.TicketImportanceLevel.String())
+		}
+	default:
+		service.logger.Warning("no notifier handler for %s status!", request.TicketStatus.String())
+	}
 }

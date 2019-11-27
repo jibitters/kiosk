@@ -26,7 +26,7 @@ The requirements to test and build the project are as follow:
 |protoc                                |3.9.2  |
 |golang/protobuf                       |1.3.2  |
 |postgres                              |11.6   |
-|nats                                  |2.12   |
+|nats                                  |2.1.2  |
 
 Optional requirements are as follow:
 

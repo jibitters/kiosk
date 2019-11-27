@@ -5,6 +5,7 @@
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ echo_service.proto
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ ticket_service.proto
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ comment_service.proto
+//go:generate protoc -I ../../api/protobuf-spec/notifier --go_out=plugins=grpc:../../ models.proto
 package main
 
 import (
@@ -17,10 +18,12 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/app/kiosk/database"
+	"github.com/jibitters/kiosk/internal/app/kiosk/nats"
 	"github.com/jibitters/kiosk/internal/app/kiosk/server"
 	"github.com/jibitters/kiosk/internal/app/kiosk/web"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
 	_ "github.com/lib/pq"
+	natsclient "github.com/nats-io/nats.go"
 	"google.golang.org/grpc"
 )
 
@@ -34,6 +37,7 @@ type kiosk struct {
 	config *configuration.Config
 	logger *logging.Logger
 	db     *pgxpool.Pool
+	nats   *natsclient.Conn
 	grpc   *grpc.Server
 }
 
@@ -44,6 +48,7 @@ func main() {
 	kiosk.configure()
 	kiosk.migrate()
 	kiosk.connectToDatabase()
+	kiosk.connectToNats()
 	kiosk.listen()
 	kiosk.listenWeb()
 	kiosk.addInterruptHook()
@@ -81,9 +86,20 @@ func (k *kiosk) connectToDatabase() {
 	k.db = db
 }
 
+// Tries to setup a connection to nats cluster.
+func (k *kiosk) connectToNats() {
+	nats, err := nats.ConnectToNats(k.config)
+	if err != nil {
+		k.stop()
+		k.logger.Fatal("failed to connect to nats cluster: %v", err)
+	}
+
+	k.nats = nats
+}
+
 // Listens on provided host and port to provide a series of gRPC services.
 func (k *kiosk) listen() {
-	server, err := server.Listen(k.config, k.logger, k.db)
+	server, err := server.Listen(k.config, k.logger, k.db, k.nats)
 	if err != nil {
 		k.stop()
 		k.logger.Fatal("failed to start gRPC server: %v", err)
@@ -95,7 +111,7 @@ func (k *kiosk) listen() {
 
 // Listens on provided host and port to provide a series of RESTful apis.
 func (k *kiosk) listenWeb() {
-	if err := web.ListenWeb(k.config, k.logger, k.db); err != nil {
+	if err := web.ListenWeb(k.config, k.logger, k.db, k.nats); err != nil {
 		k.stop()
 		k.logger.Fatal("failed to start web server: %v", err)
 	}
@@ -118,6 +134,11 @@ func (k *kiosk) stop() {
 	if k.grpc != nil {
 		k.logger.Debug("stopping gRPC server ...")
 		k.grpc.GracefulStop()
+	}
+
+	if k.nats != nil {
+		k.logger.Debug("stopping nats client ...")
+		k.nats.Close()
 	}
 
 	if k.db != nil {

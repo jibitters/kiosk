@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "g/rpc/notifier";
+
+message NotificationRequest {
+    Type type = 1;
+    string message = 2;
+    repeated string recipient = 3;
+    string subject = 4;
+    string body = 5;
+
+    enum Type {
+        INVALID = 0;
+        SMS = 1;
+        CALL = 2;
+        EMAIL = 3;
+        PUSH = 4;
+    }
+}

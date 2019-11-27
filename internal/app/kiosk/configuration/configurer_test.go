@@ -107,6 +107,32 @@ func TestValidatePostgresConfig(t *testing.T) {
 	}
 }
 
+func TestValidateNatsConfig(t *testing.T) {
+	config := NatsConfig{Addresses: nil}
+	config.validate()
+	if len(config.Addresses) != 1 {
+		t.Logf("Actual value: %v Expected value: 1", len(config.Addresses))
+		t.FailNow()
+	}
+
+	if config.Addresses[0] != "nats://localhost:4222" {
+		t.Logf("Actual value: %v Expected value: nats://localhost:4222", config.Addresses[0])
+		t.FailNow()
+	}
+
+	config = NatsConfig{Addresses: []string{}}
+	config.validate()
+	if len(config.Addresses) != 1 {
+		t.Logf("Actual value: %v Expected value: 1", len(config.Addresses))
+		t.FailNow()
+	}
+
+	if config.Addresses[0] != "nats://localhost:4222" {
+		t.Logf("Actual value: %v Expected value: nats://localhost:4222", config.Addresses[0])
+		t.FailNow()
+	}
+}
+
 func TestValidateGRPCConfig(t *testing.T) {
 	config := GRPCConfig{Host: ""}
 	config.validate()
@@ -183,6 +209,48 @@ func TestConfigure(t *testing.T) {
 			"max_connection" : 8,
 			"ssl_mode": "disable",
 			"migration_directory": "file://migration/postgres"
+		},
+	
+		"nats": {
+			"addresses": ["nats://localhost:4222"]
+		},
+	
+		"notifier": {
+			"subject": "notifier.notifications"
+		},
+	
+		"notifications": {
+			"ticket": {
+				"new": {
+					"low": {
+						"type": "EMAIL",
+						"recipients": ["support@example.com"]
+					},
+	
+					"medium": {
+						"type": "EMAIL",
+						"recipients": ["support@example.com"]
+					},
+	
+					"high": {
+						"type": "EMAIL",
+						"recipients": ["support@example.com"]
+					},
+	
+					"critical": {
+						"type": "SMS",
+						"recipients": ["09120000000"]
+					}
+				}
+			},
+			
+			"comment": {
+				"new": {
+					"type": "EMAIL",
+					"recipients": ["support@example.com"],
+					"ignore_owners": [""]
+				}
+			}
 		},
 	
 		"grpc": {
@@ -265,6 +333,66 @@ func TestConfigure(t *testing.T) {
 
 	if config.Postgres.MigrationDirectory != "file://migration/postgres" {
 		t.Logf("Actual value: %v Expected value: file://migration/postgres", config.Postgres.MigrationDirectory)
+		t.FailNow()
+	}
+
+	if config.Nats.Addresses[0] != "nats://localhost:4222" {
+		t.Logf("Actual value: %v Expected value: nats://localhost:4222", config.Nats.Addresses[0])
+		t.FailNow()
+	}
+
+	if config.Notifier.Subject != "notifier.notifications" {
+		t.Logf("Actual value: %v Expected value: notifier.notifications", config.Notifier.Subject)
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.Low.Type != "EMAIL" {
+		t.Logf("Actual value: %v Expected value: EMAIL", config.Notifications.Ticket.New.Low.Type)
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.Low.Recipients[0] != "support@example.com" {
+		t.Logf("Actual value: %v Expected value: support@example.com", config.Notifications.Ticket.New.Low.Recipients[0])
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.Medium.Type != "EMAIL" {
+		t.Logf("Actual value: %v Expected value: EMAIL", config.Notifications.Ticket.New.Medium.Type)
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.Medium.Recipients[0] != "support@example.com" {
+		t.Logf("Actual value: %v Expected value: support@example.com", config.Notifications.Ticket.New.Medium.Recipients[0])
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.High.Type != "EMAIL" {
+		t.Logf("Actual value: %v Expected value: EMAIL", config.Notifications.Ticket.New.High.Type)
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.High.Recipients[0] != "support@example.com" {
+		t.Logf("Actual value: %v Expected value: support@example.com", config.Notifications.Ticket.New.High.Recipients[0])
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.Critical.Type != "SMS" {
+		t.Logf("Actual value: %v Expected value: SMS", config.Notifications.Ticket.New.Critical.Type)
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.Critical.Recipients[0] != "09120000000" {
+		t.Logf("Actual value: %v Expected value: 09120000000", config.Notifications.Ticket.New.Critical.Recipients[0])
+		t.FailNow()
+	}
+
+	if config.Notifications.Comment.New.Type != "EMAIL" {
+		t.Logf("Actual value: %v Expected value: EMAIL", config.Notifications.Comment.New.Type)
+		t.FailNow()
+	}
+
+	if config.Notifications.Comment.New.Recipients[0] != "support@example.com" {
+		t.Logf("Actual value: %v Expected value: support@example.com", config.Notifications.Comment.New.Recipients[0])
 		t.FailNow()
 	}
 

@@ -10,6 +10,8 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/jackc/pgx/v4 v4.1.2
 	github.com/lib/pq v1.2.0
+	github.com/nats-io/nats-server/v2 v2.1.2 // indirect
+	github.com/nats-io/nats.go v1.9.1
 	github.com/prometheus/client_golang v1.2.1
 	github.com/testcontainers/testcontainers-go v0.0.9
 	github.com/valyala/fasthttp v1.6.0

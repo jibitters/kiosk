@@ -21,6 +21,47 @@
         "migration_directory": "file://migration/postgres"
     },
 
+    "nats": {
+        "addresses": ["nats://localhost:4222"]
+    },
+
+    "notifier": {
+        "subject": "notifier.notifications"
+    },
+
+    "notifications": {
+        "ticket": {
+            "new": {
+                "low": {
+                    "type": "EMAIL",
+                    "recipients": ["support@example.com"]
+                },
+
+                "medium": {
+                    "type": "EMAIL",
+                    "recipients": ["support@example.com"]
+                },
+
+                "high": {
+                    "type": "EMAIL",
+                    "recipients": ["support@example.com"]
+                },
+
+                "critical": {
+                    "type": "SMS",
+                    "recipients": ["09120000000"]
+                }
+            }
+        },
+        
+        "comment": {
+            "new": {
+                "type": "EMAIL",
+                "recipients": ["support@example.com"]
+            }
+        }
+    },
+
     "grpc": {
         "host": "localhost",
         "port": 9090
