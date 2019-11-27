@@ -17,6 +17,7 @@ import (
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/app/kiosk/services"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/valyala/fasthttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,8 +34,8 @@ type handler struct {
 }
 
 // ListenWeb creates a new HTTP server and listens on provided host and port.
-func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool) error {
-	handler := setup(config, logger, db)
+func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) error {
+	handler := setup(config, logger, db, nats)
 
 	router := router.New()
 	router.POST(version+"/echo", handler.echo)
@@ -53,10 +54,10 @@ func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool
 	return nil
 }
 
-func setup(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool) *handler {
+func setup(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) *handler {
 	return &handler{
 		echoService:    services.NewEchoService(),
-		ticketService:  services.NewTicketService(logger, db),
+		ticketService:  services.NewTicketService(config, logger, db, nats),
 		commentService: services.NewCommentService(logger, db),
 		marshaler:      &jsonpb.Marshaler{OrigName: true, EmitDefaults: true},
 		unmarshaler:    &jsonpb.Unmarshaler{},

@@ -5,6 +5,7 @@
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ echo_service.proto
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ ticket_service.proto
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ comment_service.proto
+//go:generate protoc -I ../../api/protobuf-spec/notifier --go_out=plugins=grpc:../../ models.proto
 package main
 
 import (
@@ -98,7 +99,7 @@ func (k *kiosk) connectToNats() {
 
 // Listens on provided host and port to provide a series of gRPC services.
 func (k *kiosk) listen() {
-	server, err := server.Listen(k.config, k.logger, k.db)
+	server, err := server.Listen(k.config, k.logger, k.db, k.nats)
 	if err != nil {
 		k.stop()
 		k.logger.Fatal("failed to start gRPC server: %v", err)
@@ -110,7 +111,7 @@ func (k *kiosk) listen() {
 
 // Listens on provided host and port to provide a series of RESTful apis.
 func (k *kiosk) listenWeb() {
-	if err := web.ListenWeb(k.config, k.logger, k.db); err != nil {
+	if err := web.ListenWeb(k.config, k.logger, k.db, k.nats); err != nil {
 		k.stop()
 		k.logger.Fatal("failed to start web server: %v", err)
 	}

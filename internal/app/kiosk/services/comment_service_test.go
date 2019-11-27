@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
+	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
 	"github.com/jibitters/kiosk/test/containers"
 	"google.golang.org/grpc/codes"
@@ -101,7 +102,15 @@ func TestCreateComment(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	ticketService := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	ticketService := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -202,7 +211,15 @@ func TestUpdateComment(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	ticketService := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	ticketService := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -309,7 +326,15 @@ func TestDeleteComment(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	ticketService := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	ticketService := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",

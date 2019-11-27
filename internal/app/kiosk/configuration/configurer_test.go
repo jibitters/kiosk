@@ -216,9 +216,7 @@ func TestConfigure(t *testing.T) {
 		},
 	
 		"notifier": {
-			"notify_by_sms_subject": "notifier.notifications.sms",
-			"notify_by_call_subject": "notifier.notifications.call",
-			"notify_by_email_subject": "notifier.notifications.email"
+			"subject": "notifier.notifications"
 		},
 	
 		"notifications": {
@@ -343,18 +341,8 @@ func TestConfigure(t *testing.T) {
 		t.FailNow()
 	}
 
-	if config.Notifier.NotifyBySMSSubject != "notifier.notifications.sms" {
-		t.Logf("Actual value: %v Expected value: notifier.notifications.sms", config.Notifier.NotifyBySMSSubject)
-		t.FailNow()
-	}
-
-	if config.Notifier.NotifyByCallSubject != "notifier.notifications.call" {
-		t.Logf("Actual value: %v Expected value: notifier.notifications.call", config.Notifier.NotifyByCallSubject)
-		t.FailNow()
-	}
-
-	if config.Notifier.NotifyByEmailSubject != "notifier.notifications.email" {
-		t.Logf("Actual value: %v Expected value: notifier.notifications.email", config.Notifier.NotifyByEmailSubject)
+	if config.Notifier.Subject != "notifier.notifications" {
+		t.Logf("Actual value: %v Expected value: notifier.notifications", config.Notifier.Subject)
 		t.FailNow()
 	}
 

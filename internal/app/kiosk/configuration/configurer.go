@@ -102,9 +102,7 @@ func (nc *NatsConfig) validate() {
 
 // NotifierConfig encapsulates the notifier project configuration properties.
 type NotifierConfig struct {
-	NotifyBySMSSubject   string `json:"notify_by_sms_subject"`
-	NotifyByCallSubject  string `json:"notify_by_call_subject"`
-	NotifyByEmailSubject string `json:"notify_by_email_subject"`
+	Subject string `json:"subject"`
 }
 
 // NotificationsConfig encapsulates the notifications configuration properties required on different action types.

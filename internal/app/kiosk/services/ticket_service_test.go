@@ -7,6 +7,7 @@ import (
 	"context"
 	"io/ioutil"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,9 +18,11 @@ import (
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/app/kiosk/database"
+	"github.com/jibitters/kiosk/internal/app/kiosk/nats"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
 	"github.com/jibitters/kiosk/test/containers"
 	_ "github.com/lib/pq"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"google.golang.org/grpc/codes"
@@ -124,8 +127,42 @@ func setupPostgresAndRunMigration() (testcontainers.Container, *pgxpool.Pool, er
 	return container, db, nil
 }
 
+func setupNats() (testcontainers.Container, *natsclient.Conn, error) {
+	containerPort, err := nat.NewPort("tcp", "4222")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	request := testcontainers.ContainerRequest{
+		Image:        "nats:2",
+		ExposedPorts: []string{"4222/tcp"},
+	}
+
+	container, err := containers.NewContainer(request)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	mappedPort, err := container.MappedPort(containers.ContainersContext, containerPort)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	config := &configuration.Config{Nats: configuration.NatsConfig{
+		Addresses: []string{"nats://localhost:" + strconv.Itoa(mappedPort.Int())},
+	}}
+
+	time.Sleep(time.Second)
+	nats, err := nats.ConnectToNats(config)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return container, nats, nil
+}
+
 func TestCreate_InvalidArgument(t *testing.T) {
-	service := NewTicketService(logging.New(logging.DebugLevel), nil)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
 
 	ticket := &rpc.Ticket{
 		Owner:                 "09203091992",
@@ -191,7 +228,7 @@ func TestCreate_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -214,7 +251,7 @@ func TestCreate_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -237,7 +274,15 @@ func TestCreate(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -245,7 +290,7 @@ func TestCreate(t *testing.T) {
 		Subject:               "Documentation",
 		Content:               "Hello, i need some help about your technical documentation.",
 		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
-		TicketImportanceLevel: rpc.TicketImportanceLevel_HIGH,
+		TicketImportanceLevel: rpc.TicketImportanceLevel_MEDIUM,
 		TicketStatus:          rpc.TicketStatus_NEW,
 	}
 
@@ -256,7 +301,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestRead_InvalidArgument(t *testing.T) {
-	service := NewTicketService(logging.New(logging.DebugLevel), nil)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
 
 	id := &rpc.Id{Id: 0}
 	readShouldReturnInvalidArgument(t, service, id, "read_ticket.invalid_id")
@@ -271,7 +316,7 @@ func TestRead_Notfound(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	readShouldReturnNotfound(t, service, id, "read_ticket.not_found")
@@ -286,7 +331,7 @@ func TestRead_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	readShouldReturnInternal(t, service, id, "read_ticket.failed")
@@ -301,7 +346,7 @@ func TestRead_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	readShouldReturnInternal(t, service, id, "read_ticket.failed")
@@ -316,7 +361,15 @@ func TestRead(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -399,7 +452,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestUpdate_InvalidArgument(t *testing.T) {
-	service := NewTicketService(logging.New(logging.DebugLevel), nil)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           0,
@@ -423,7 +476,7 @@ func TestUpdate_Notfound(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           1,
@@ -441,7 +494,7 @@ func TestUpdate_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           1,
@@ -459,7 +512,7 @@ func TestUpdate_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           1,
@@ -477,7 +530,15 @@ func TestUpdate(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -528,7 +589,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestDelete_InvalidArgument(t *testing.T) {
-	service := NewTicketService(logging.New(logging.DebugLevel), nil)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
 
 	id := &rpc.Id{Id: 0}
 	deleteShouldReturnInvalidArgument(t, service, id, "delete_ticket.invalid_id")
@@ -543,7 +604,7 @@ func TestDelete_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	deleteShouldReturnInternal(t, service, id, "delete_ticket.failed")
@@ -558,7 +619,7 @@ func TestDelete_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	deleteShouldReturnInternal(t, service, id, "delete_ticket.failed")
@@ -573,7 +634,15 @@ func TestDelete(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -605,7 +674,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestFilter_InvalidArgument(t *testing.T) {
-	service := NewTicketService(logging.New(logging.DebugLevel), nil)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
 
 	filter := &rpc.FilterTicketsRequest{
 		Page: &rpc.Page{Number: 0, Size: 10},
@@ -632,7 +701,7 @@ func TestFilter_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	filter := &rpc.FilterTicketsRequest{
 		Page: &rpc.Page{Number: 1, Size: 10},
@@ -649,7 +718,7 @@ func TestFilter_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
 
 	filter := &rpc.FilterTicketsRequest{
 		Page: &rpc.Page{Number: 1, Size: 10},
@@ -666,7 +735,15 @@ func TestFilter(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(logging.New(logging.DebugLevel), db)
+	natsContainer, nats, err := setupNats()
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+	defer containers.CloseContainer(natsContainer)
+	defer nats.Close()
+
+	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 	commentService := NewCommentService(logging.New(logging.DebugLevel), db)
 
 	// Inserting first ticket and its single comment.
