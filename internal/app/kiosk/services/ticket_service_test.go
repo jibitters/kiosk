@@ -744,7 +744,7 @@ func TestFilter(t *testing.T) {
 	defer nats.Close()
 
 	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
-	commentService := NewCommentService(logging.New(logging.DebugLevel), db)
+	commentService := NewCommentService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
 
 	// Inserting first ticket and its single comment.
 	first := &rpc.Ticket{

@@ -29,7 +29,7 @@ func Listen(config *configuration.Config, logger *logging.Logger, db *pgxpool.Po
 	server := server(config)
 	rpc.RegisterEchoServiceServer(server, services.NewEchoService())
 	rpc.RegisterTicketServiceServer(server, services.NewTicketService(config, logger, db, nats))
-	rpc.RegisterCommentServiceServer(server, services.NewCommentService(logger, db))
+	rpc.RegisterCommentServiceServer(server, services.NewCommentService(config, logger, db, nats))
 
 	if config.Application.Metrics {
 		go enableMetricsEndpoint(config.Application.MetricsHost, config.Application.MetricsPort)

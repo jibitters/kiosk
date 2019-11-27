@@ -5,27 +5,42 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jackc/pgx/v4/pgxpool"
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
+	notifiermodels "github.com/jibitters/kiosk/g/rpc/notifier"
+	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
 	"github.com/jibitters/kiosk/internal/pkg/logging"
+	natsclient "github.com/nats-io/nats.go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+const (
+	newCommentSMSTemplate          = "A new comment created for ticket with ID: %d. Please check the panel."
+	newCommentEmailSubjectTemplate = "A new comment created for ticket with ID: %d"
+	newCommentEmailBodyTemplate    = ""
+)
+
 // CommentService is the implementation of comment related rpc methods.
 type CommentService struct {
+	config *configuration.Config
 	logger *logging.Logger
 	db     *pgxpool.Pool
+	nats   *natsclient.Conn
 }
 
 // NewCommentService creates and returns a new ready to use comment service implementation.
-func NewCommentService(logger *logging.Logger, db *pgxpool.Pool) *CommentService {
+func NewCommentService(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) *CommentService {
 	return &CommentService{
+		config: config,
 		logger: logger,
 		db:     db,
+		nats:   nats,
 	}
 }
 
@@ -38,6 +53,8 @@ func (service *CommentService) Create(context context.Context, request *rpc.Comm
 	if err := service.insertOne(context, request); err != nil {
 		return nil, err
 	}
+
+	service.notify(request)
 
 	return &empty.Empty{}, nil
 }
@@ -140,4 +157,16 @@ func (service *CommentService) deleteOne(context context.Context, id *rpc.Id) er
 	}
 
 	return nil
+}
+
+func (service *CommentService) notify(request *rpc.Comment) {
+	protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+		Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Comment.New.Type]),
+		Message:   fmt.Sprintf(newCommentSMSTemplate, request.TicketId),
+		Subject:   fmt.Sprintf(newCommentEmailSubjectTemplate, request.TicketId),
+		Body:      newCommentEmailBodyTemplate,
+		Recipient: service.config.Notifications.Comment.New.Recipients,
+	})
+
+	service.nats.Publish(service.config.Notifier.Subject, protobytes)
 }

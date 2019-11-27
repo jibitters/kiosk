@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	newTicketSMSTemplate          = "A new Ticket with %s Importance Level Created by %s. Please Check Panel."
-	newTicketEmailSubjectTemplate = "A new Ticket with %s Importance Level Created by %s"
+	newTicketSMSTemplate          = "A new ticket with %s importance level created by %s. Please check the panel."
+	newTicketEmailSubjectTemplate = "A new ticket with %s Importance Level created by %s"
 	newTicketEmailBodyTemplate    = ""
 )
 
