@@ -12,11 +12,14 @@ import (
 
 // Config encapsulates toplevel configuration properties.
 type Config struct {
-	Application ApplicationConfig `json:"application"`
-	Logger      LoggerConfig      `json:"logger"`
-	Postgres    PostgresConfig    `json:"postgres"`
-	GRPC        GRPCConfig        `json:"grpc"`
-	WEB         WEBConfig         `json:"web"`
+	Application   ApplicationConfig   `json:"application"`
+	Logger        LoggerConfig        `json:"logger"`
+	Postgres      PostgresConfig      `json:"postgres"`
+	Nats          NatsConfig          `json:"nats"`
+	Notifier      NotifierConfig      `json:"notifier"`
+	Notifications NotificationsConfig `json:"notifications"`
+	GRPC          GRPCConfig          `json:"grpc"`
+	WEB           WEBConfig           `json:"web"`
 }
 
 // ApplicationConfig encapsulates default application properties.
@@ -86,6 +89,54 @@ func (pc *PostgresConfig) validate() {
 	}
 }
 
+// NatsConfig encapsulates the nats cluster configuration properties.
+type NatsConfig struct {
+	Addresses []string `json:"addresses"`
+}
+
+func (nc *NatsConfig) validate() {
+	if nc.Addresses == nil || len(nc.Addresses) == 0 {
+		nc.Addresses = append(nc.Addresses, "nats://localhost:4222")
+	}
+}
+
+// NotifierConfig encapsulates the notifier project configuration properties.
+type NotifierConfig struct {
+	NotifyBySMSSubject   string `json:"notify_by_sms_subject"`
+	NotifyByCallSubject  string `json:"notify_by_call_subject"`
+	NotifyByEmailSubject string `json:"notify_by_email_subject"`
+}
+
+// NotificationsConfig encapsulates the notifications configuration properties required on different action types.
+type NotificationsConfig struct {
+	Ticket  TicketNotificationConfig  `json:"ticket"`
+	Comment CommentNotificationConfig `json:"comment"`
+}
+
+// TicketNotificationConfig encapsulates the notifications configuration properties related to ticket services.
+type TicketNotificationConfig struct {
+	New NewTicketNotificationConfig `json:"new"`
+}
+
+// NewTicketNotificationConfig encapsulates the notifications configuration properties related to new ticket created.
+type NewTicketNotificationConfig struct {
+	Low      NotificationConfig `json:"low"`
+	Medium   NotificationConfig `json:"medium"`
+	High     NotificationConfig `json:"high"`
+	Critical NotificationConfig `json:"critical"`
+}
+
+// CommentNotificationConfig encapsulates the notifications configuration properties related to comment services.
+type CommentNotificationConfig struct {
+	New NotificationConfig `json:"new"`
+}
+
+// NotificationConfig encapsulates a single notification configuration properties.
+type NotificationConfig struct {
+	Type       string   `json:"type"`
+	Recipients []string `json:"recipients"`
+}
+
 // GRPCConfig encapsulates gRPC server configuration properties.
 type GRPCConfig struct {
 	Host string `json:"host"`
@@ -135,6 +186,7 @@ func Configure(logger *logging.Logger, filePath string) (*Config, error) {
 	config.Application.validate()
 	config.Logger.validate()
 	config.Postgres.validate()
+	config.Nats.validate()
 	config.GRPC.validate()
 	config.WEB.validate()
 
