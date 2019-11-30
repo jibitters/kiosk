@@ -8,5 +8,6 @@ VOLUME /app/configs
 WORKDIR /app
 
 EXPOSE 9090
+EXPOSE 8080
 EXPOSE 9091
 ENTRYPOINT ["./kiosk"]
