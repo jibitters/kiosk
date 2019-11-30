@@ -10,6 +10,7 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -39,6 +40,7 @@ type kiosk struct {
 	db     *pgxpool.Pool
 	nats   *natsclient.Conn
 	grpc   *grpc.Server
+	web    *http.Server
 }
 
 func main() {
@@ -111,10 +113,7 @@ func (k *kiosk) listen() {
 
 // Listens on provided host and port to provide a series of RESTful apis.
 func (k *kiosk) listenWeb() {
-	if err := web.ListenWeb(k.config, k.logger, k.db, k.nats); err != nil {
-		k.stop()
-		k.logger.Fatal("failed to start web server: %v", err)
-	}
+	k.web = web.ListenWeb(k.config, k.logger, k.db, k.nats)
 
 	k.logger.Info("successfully started web server and listening on %s:%d", k.config.WEB.Host, k.config.WEB.Port)
 }
@@ -131,6 +130,11 @@ func (k *kiosk) addInterruptHook() {
 // Gracefully stops all components.
 func (k *kiosk) stop() {
 	// First we should stop gRPC to deny incoming calls.
+	if k.web != nil {
+		k.logger.Debug("stopping web server ...")
+		k.web.Close()
+	}
+
 	if k.grpc != nil {
 		k.logger.Debug("stopping gRPC server ...")
 		k.grpc.GracefulStop()
