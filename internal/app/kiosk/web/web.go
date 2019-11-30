@@ -40,6 +40,7 @@ type Route struct {
 func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) *http.Server {
 	echoController := NewEchoController(services.NewEchoService())
 	ticketController := NewTicketController(services.NewTicketService(config, logger, db, nats))
+	commentController := NewCommentController(services.NewCommentService(config, logger, db, nats))
 
 	router := mux.NewRouter()
 	router = router.PathPrefix(version).Methods(http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete).Subrouter()
@@ -48,6 +49,10 @@ func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool
 	}
 
 	for _, route := range ticketController.Routes() {
+		router.Methods(route.Method).Path(route.Path).HandlerFunc(route.Handler)
+	}
+
+	for _, route := range commentController.Routes() {
 		router.Methods(route.Method).Path(route.Path).HandlerFunc(route.Handler)
 	}
 

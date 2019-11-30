@@ -28,7 +28,7 @@ HTTP/1.1 200 OK
 {}
 
 ### Delete comment request.
-DELETE http://localhost:8080/v1/tickets/10
+DELETE http://localhost:8080/v1/comments/10
 
 HTTP/1.1 200 OK
 {}
