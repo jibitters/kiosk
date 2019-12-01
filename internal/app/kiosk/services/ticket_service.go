@@ -498,41 +498,41 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 		switch request.TicketImportanceLevel {
 		case rpc.TicketImportanceLevel_LOW:
 			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
-				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Low.Type]),
-				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
-				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
-				Body:      newTicketEmailBodyTemplate,
-				Recipient: service.config.Notifications.Ticket.New.Low.Recipients,
+				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Low.Type]),
+				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:             newTicketEmailBodyTemplate,
+				Recipient:        service.config.Notifications.Ticket.New.Low.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)
 
 		case rpc.TicketImportanceLevel_MEDIUM:
 			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
-				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Medium.Type]),
-				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
-				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
-				Body:      newTicketEmailBodyTemplate,
-				Recipient: service.config.Notifications.Ticket.New.Medium.Recipients,
+				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Medium.Type]),
+				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:             newTicketEmailBodyTemplate,
+				Recipient:        service.config.Notifications.Ticket.New.Medium.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)
 
 		case rpc.TicketImportanceLevel_HIGH:
 			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
-				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.High.Type]),
-				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
-				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
-				Body:      newTicketEmailBodyTemplate,
-				Recipient: service.config.Notifications.Ticket.New.High.Recipients,
+				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.High.Type]),
+				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:             newTicketEmailBodyTemplate,
+				Recipient:        service.config.Notifications.Ticket.New.High.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)
 
 		case rpc.TicketImportanceLevel_CRITICAL:
 			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
-				Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Critical.Type]),
-				Message:   fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
-				Subject:   fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
-				Body:      newTicketEmailBodyTemplate,
-				Recipient: service.config.Notifications.Ticket.New.Critical.Recipients,
+				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Critical.Type]),
+				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
+				Body:             newTicketEmailBodyTemplate,
+				Recipient:        service.config.Notifications.Ticket.New.Critical.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)
 

@@ -161,11 +161,11 @@ func (service *CommentService) deleteOne(context context.Context, id *rpc.Id) er
 
 func (service *CommentService) notify(request *rpc.Comment) {
 	protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
-		Type:      notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Comment.New.Type]),
-		Message:   fmt.Sprintf(newCommentSMSTemplate, request.TicketId),
-		Subject:   fmt.Sprintf(newCommentEmailSubjectTemplate, request.TicketId),
-		Body:      newCommentEmailBodyTemplate,
-		Recipient: service.config.Notifications.Comment.New.Recipients,
+		NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Comment.New.Type]),
+		Message:          fmt.Sprintf(newCommentSMSTemplate, request.TicketId),
+		Subject:          fmt.Sprintf(newCommentEmailSubjectTemplate, request.TicketId),
+		Body:             newCommentEmailBodyTemplate,
+		Recipient:        service.config.Notifications.Comment.New.Recipients,
 	})
 
 	service.nats.Publish(service.config.Notifier.Subject, protobytes)
