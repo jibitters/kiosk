@@ -10,16 +10,9 @@ language: go
 go:
   - 1.13.x
 
-env:
-  - global:
-    - REGISTRY_URL=hub.docker.com
-    - PROJECT_NAME=kiosk
-    - REGISTRY_USER=jibitters
-
 stages:
   - test
-  - name: publish
-    if: branch = master
+  - publish
 
 jobs:
   include:
