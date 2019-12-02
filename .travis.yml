@@ -11,9 +11,10 @@ go:
   - 1.13.x
 
 env:
-  - REGISTRY_URL=hub.docker.com
-  - PROJECT_NAME=kiosk
-  - REGISTRY_USER=jibitters
+  - global:
+    - REGISTRY_URL=hub.docker.com
+    - PROJECT_NAME=kiosk
+    - REGISTRY_USER=jibitters
 
 stages:
   - test
