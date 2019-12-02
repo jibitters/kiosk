@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+PROJECT_NAME=kiosk
+REGISTRY_USER=jibitters
+
 # Extracting the version number from the executable file.
 VERSION=$(ls | grep -E 'kiosk-linux-.*$' | sed -E 's/kiosk-linux-v//')
 
-IMAGE_NAME=$REGISTRY_URL/$PROJECT_NAME
+IMAGE_NAME=jibitters/$PROJECT_NAME
 case $TRAVIS_BRANCH in
 	master)
 	    IMAGE_TAG=$VERSION
@@ -20,7 +23,7 @@ echo About to build the $IMAGE_NAME:$IMAGE_TAG image
 docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
 echo Signing into registry!
-docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY_URL
+docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD
 
 echo Pushing the $IMAGE_NAME:$IMAGE_TAG ...
 docker push $IMAGE_NAME:$IMAGE_TAG
