@@ -12,7 +12,7 @@ go:
 
 env:
   - global:
-    - REGISTRY_USER = jibitters
+    - REGISTRY_USER=jibitters
 
 stages:
   - test
