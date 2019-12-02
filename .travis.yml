@@ -10,6 +10,10 @@ language: go
 go:
   - 1.13.x
 
+env:
+  - global:
+    - REGISTRY_USER = jibitters
+
 stages:
   - test
   - publish
