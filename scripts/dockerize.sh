@@ -4,7 +4,7 @@
 VERSION=$(ls | grep -E 'kiosk-linux-.*$' | sed -E 's/kiosk-linux-v//')
 
 IMAGE_NAME=$REGISTRY_URL/$PROJECT_NAME
-case $CI_COMMIT_REF_NAME in
+case $TRAVIS_BRANCH in
 	master)
 	    IMAGE_TAG=$VERSION
 		;;

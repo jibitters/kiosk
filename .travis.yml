@@ -10,10 +10,15 @@ language: go
 go:
   - 1.13.x
 
+env:
+  - REGISTRY_URL=hub.docker.com
+  - PROJECT_NAME=kiosk
+  - REGISTRY_USER=jibitters
+
 stages:
   - test
-  # - name: deploy
-  #   if: branch = master
+  - name: publish
+    if: branch = master
 
 jobs:
   include:
@@ -28,6 +33,14 @@ jobs:
         - chmod +x ./scripts/test.sh && ./scripts/test.sh
       after_success:
         - bash <(curl -s https://codecov.io/bash)
+
+    - stage: publish
+      before_script:
+        - go get -u golang.org/x/lint/golint
+        - go get -u github.com/golang/protobuf/protoc-gen-go
+        - chmod +x ./scripts/build.sh && ./scripts/build.sh
+      script:
+        - chmod +x ./scripts/dockerize.sh && ./scripts/dockerize.sh
 
 services:
   - docker
