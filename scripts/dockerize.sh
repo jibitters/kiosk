@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 
-PROJECT_NAME=kiosk
-REGISTRY_USER=jibitters
-
 # Extracting the version number from the executable file.
 VERSION=$(ls | grep -E 'kiosk-linux-.*$' | sed -E 's/kiosk-linux-v//')
 
-IMAGE_NAME=jibitters/$PROJECT_NAME
+IMAGE_NAME=jibitters/kiosk
 case $TRAVIS_BRANCH in
 	master)
 	    IMAGE_TAG=$VERSION
