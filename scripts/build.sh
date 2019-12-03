@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-KIOSK_VERSION=v0.0.10
+KIOSK_VERSION=v0.0.11
 
 go generate ./cmd/kiosk/main.go
 
