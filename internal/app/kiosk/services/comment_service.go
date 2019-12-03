@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	rpc "github.com/jibitters/kiosk/g/rpc/kiosk"
 	notifiermodels "github.com/jibitters/kiosk/g/rpc/notifier"
@@ -106,20 +107,17 @@ func (service *CommentService) validateDelete(request *rpc.Id) error {
 }
 
 func (service *CommentService) insertOne(context context.Context, comment *rpc.Comment) error {
-	query := `
-	INSERT INTO comments(ticket_id, owner, content, metadata, created_at, updated_at)
-	VALUES ($1, $2, $3, $4, now(), now())`
+	insertCommentQuery := `INSERT INTO comments(ticket_id, owner, content, metadata, created_at, updated_at) VALUES ($1, $2, $3, $4, now(), now())`
+	updateTicketQuery := `UPDATE tickets SET updated_at=now() WHERE id=$1`
 
-	_, err := service.db.Exec(
-		context,
-		query,
-		comment.TicketId,
-		comment.Owner,
-		comment.Content,
-		comment.Metadata,
-	)
+	batch := &pgx.Batch{}
+	batch.Queue("BEGIN")
+	batch.Queue(insertCommentQuery, comment.TicketId, comment.Owner, comment.Content, comment.Metadata)
+	batch.Queue(updateTicketQuery, comment.TicketId)
+	batch.Queue("COMMIT")
 
-	if err != nil {
+	results := service.db.SendBatch(context, batch)
+	if err := results.Close(); err != nil {
 		if strings.Contains(err.Error(), "comments_ticket_id_fkey") {
 			return status.Error(codes.InvalidArgument, "create_comment.ticket_not_exists")
 		}

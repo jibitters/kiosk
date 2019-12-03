@@ -25,7 +25,7 @@ import (
 
 const (
 	newTicketSMSTemplate          = "A new ticket with %s importance level created by %s. Please check the panel."
-	newTicketEmailSubjectTemplate = "A new ticket with %s Importance Level created by %s"
+	newTicketEmailSubjectTemplate = "A new ticket with %s importance level created by %s."
 	newTicketEmailBodyTemplate    = ""
 )
 
@@ -441,11 +441,11 @@ func buildFilterTicketsQuery(request *rpc.FilterTicketsRequest) (string, []inter
 	args = append(args, request.TicketStatus.String())
 
 	counter++
-	query.WriteString(` AND issued_at >= $` + strconv.Itoa(counter))
+	query.WriteString(` AND updated_at >= $` + strconv.Itoa(counter))
 	args = append(args, request.FromDate)
 
 	counter++
-	query.WriteString(` AND issued_at < $` + strconv.Itoa(counter))
+	query.WriteString(` AND updated_at < $` + strconv.Itoa(counter))
 	args = append(args, request.ToDate)
 
 	if request.Issuer != "" {
