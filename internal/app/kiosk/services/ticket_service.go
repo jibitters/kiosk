@@ -221,7 +221,7 @@ func (service *TicketService) insertOne(context context.Context, ticket *rpc.Tic
 
 func (service *TicketService) findOne(context context.Context, id int64) (*rpc.Ticket, error) {
 	findTicketQuery := `SELECT id, issuer, owner, subject, content, metadata, ticket_importance_level, ticket_status, issued_at, updated_at FROM tickets WHERE id = $1`
-	findCommentsQuery := `SELECT id, ticket_id, owner, content, metadata, created_at, updated_at FROM comments WHERE comments.ticket_id = $1`
+	findCommentsQuery := `SELECT id, ticket_id, owner, content, metadata, created_at, updated_at FROM comments WHERE ticket_id = $1 ORDER BY created_at DESC`
 
 	batch := &pgx.Batch{}
 	batch.Queue(findTicketQuery, id)
