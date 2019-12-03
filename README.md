@@ -3,19 +3,10 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![build](https://travis-ci.org/jibitters/kiosk.svg?branch=master)](https://travis-ci.org/jibitters/kiosk)
 [![codecov](https://codecov.io/gh/jibitters/kiosk/branch/master/graph/badge.svg)](https://codecov.io/gh/jibitters/kiosk)
-[![release](https://img.shields.io/badge/release-v0.0.10-1eb0fc.svg)](https://github.com/jibitters/kiosk/releases/tag/v0.0.10)
 
 ## About
 
 A typical ticketing system that provides both gRPC and REST interfaces. This project is intended to be used by internal microservices so we recommend to not expose interfaces directly to the public network.
-
-## How to run
-
-If you want to setup kiosk in your environment please read this section; otherwise you can skip forward to the next topic.
-
-You can download the latest stable release from [releases](https://github.com/jibitters/kiosk/releases) page and run it with --help to see the configuration requirements.
-
-`./kiosk-linux-v1 --config path/to/kiosk.json` starts the project, easily! See configs/kiosk.json for an example configuration.
 
 ## How to build
 
@@ -43,9 +34,13 @@ Also to run tests you can use the test.sh script (Note: Ensure docker is up and 
 
 `./scripts/test.sh`
 
-And to build a docker image:
+And to build a docker image (Note: Images also available on [Docker Hub](https://hub.docker.com/r/jibitters/kiosk))
 
 `docker build -t image:tag .`
+
+## How to run
+
+`./kiosk-linux-v1 --config path/to/kiosk.json` starts the project, easily! See configs/kiosk.json for an example configuration.
 
 ## Interface Documentation
 
