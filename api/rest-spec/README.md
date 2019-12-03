@@ -8,8 +8,7 @@ As you may know 4xx and 5xx statuses indicate an error and the response body is 
     {
         "errors":[
             {
-                "code":"create_ticket.empty_issuer",
-                "message": "Issuer field could not be empty."
+                "code":"create_ticket.empty_issuer"
             }
         ]
     }

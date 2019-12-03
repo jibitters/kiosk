@@ -71,7 +71,7 @@ HTTP/1.1 200 OK
 GET http://localhost:8080/v1/tickets?page_number=1&page_size=10
 
 Notes
-Other posibble query strings: issuer, owner, ticket_importance_level, ticket_status, from_date, to_data, label, metadata.
+Other posibble query strings: issuer, owner, ticket_importance_level, ticket_status, from_date, to_data.
 
 HTTP/1.1 200 OK
 {
