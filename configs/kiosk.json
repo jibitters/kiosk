@@ -34,22 +34,34 @@
             "new": {
                 "low": {
                     "type": "EMAIL",
-                    "recipients": ["support@example.com"]
+                    "recipients": ["support@example.com"],
+                    "sender": "kiosk@example.com",
+                    "cc": [],
+                    "bcc": []
                 },
 
                 "medium": {
                     "type": "EMAIL",
-                    "recipients": ["support@example.com"]
+                    "recipients": ["support@example.com"],
+                    "sender": "kiosk@example.com",
+                    "cc": [],
+                    "bcc": []
                 },
 
                 "high": {
                     "type": "EMAIL",
-                    "recipients": ["support@example.com"]
+                    "recipients": ["support@example.com"],
+                    "sender": "kiosk@example.com",
+                    "cc": [],
+                    "bcc": []
                 },
 
                 "critical": {
                     "type": "SMS",
-                    "recipients": ["09120000000"]
+                    "recipients": ["09120000000"],
+                    "sender": "",
+                    "cc": [],
+                    "bcc": []
                 }
             }
         },
@@ -57,7 +69,10 @@
         "comment": {
             "new": {
                 "type": "EMAIL",
-                "recipients": ["support@example.com"]
+                "recipients": ["support@example.com"],
+                "sender": "kiosk@example.com",
+                "cc": [],
+                "bcc": []
             }
         }
     },

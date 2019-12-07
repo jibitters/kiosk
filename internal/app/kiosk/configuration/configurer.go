@@ -133,6 +133,9 @@ type CommentNotificationConfig struct {
 type NotificationConfig struct {
 	Type       string   `json:"type"`
 	Recipients []string `json:"recipients"`
+	Sender     string   `json:"sender"`
+	CC         []string `json:"cc"`
+	BCC        []string `json:"bcc"`
 }
 
 // GRPCConfig encapsulates gRPC server configuration properties.

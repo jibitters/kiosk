@@ -224,22 +224,34 @@ func TestConfigure(t *testing.T) {
 				"new": {
 					"low": {
 						"type": "EMAIL",
-						"recipients": ["support@example.com"]
+						"recipients": ["support@example.com"],
+						"sender": "kiosk@example.com",
+						"cc": [],
+						"bcc": []
 					},
 	
 					"medium": {
 						"type": "EMAIL",
-						"recipients": ["support@example.com"]
+						"recipients": ["support@example.com"],
+						"sender": "kiosk@example.com",
+						"cc": [],
+						"bcc": []
 					},
 	
 					"high": {
 						"type": "EMAIL",
-						"recipients": ["support@example.com"]
+						"recipients": ["support@example.com"],
+						"sender": "kiosk@example.com",
+						"cc": [],
+						"bcc": []
 					},
 	
 					"critical": {
 						"type": "SMS",
-						"recipients": ["09120000000"]
+						"recipients": ["09120000000"],
+						"sender": "",
+						"cc": [],
+						"bcc": []
 					}
 				}
 			},
@@ -248,7 +260,9 @@ func TestConfigure(t *testing.T) {
 				"new": {
 					"type": "EMAIL",
 					"recipients": ["support@example.com"],
-					"ignore_owners": [""]
+					"sender": "kiosk@example.com",
+					"cc": [],
+					"bcc": []
 				}
 			}
 		},
@@ -356,6 +370,21 @@ func TestConfigure(t *testing.T) {
 		t.FailNow()
 	}
 
+	if config.Notifications.Ticket.New.Low.Sender != "kiosk@example.com" {
+		t.Logf("Actual value: %v Expected value: kiosk@example.com", config.Notifications.Ticket.New.Low.Sender)
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.Low.CC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.Low.CC))
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.Low.BCC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.Low.BCC))
+		t.FailNow()
+	}
+
 	if config.Notifications.Ticket.New.Medium.Type != "EMAIL" {
 		t.Logf("Actual value: %v Expected value: EMAIL", config.Notifications.Ticket.New.Medium.Type)
 		t.FailNow()
@@ -363,6 +392,21 @@ func TestConfigure(t *testing.T) {
 
 	if config.Notifications.Ticket.New.Medium.Recipients[0] != "support@example.com" {
 		t.Logf("Actual value: %v Expected value: support@example.com", config.Notifications.Ticket.New.Medium.Recipients[0])
+		t.FailNow()
+	}
+
+	if config.Notifications.Ticket.New.Medium.Sender != "kiosk@example.com" {
+		t.Logf("Actual value: %v Expected value: kiosk@example.com", config.Notifications.Ticket.New.Medium.Sender)
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.Medium.CC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.Medium.CC))
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.Medium.BCC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.Medium.BCC))
 		t.FailNow()
 	}
 
@@ -376,6 +420,21 @@ func TestConfigure(t *testing.T) {
 		t.FailNow()
 	}
 
+	if config.Notifications.Ticket.New.High.Sender != "kiosk@example.com" {
+		t.Logf("Actual value: %v Expected value: kiosk@example.com", config.Notifications.Ticket.New.High.Sender)
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.High.CC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.High.CC))
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.High.BCC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.High.BCC))
+		t.FailNow()
+	}
+
 	if config.Notifications.Ticket.New.Critical.Type != "SMS" {
 		t.Logf("Actual value: %v Expected value: SMS", config.Notifications.Ticket.New.Critical.Type)
 		t.FailNow()
@@ -386,6 +445,21 @@ func TestConfigure(t *testing.T) {
 		t.FailNow()
 	}
 
+	if config.Notifications.Ticket.New.Critical.Sender != "" {
+		t.Logf("Actual value: %v Expected value: ", config.Notifications.Ticket.New.Critical.Sender)
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.Critical.CC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.Critical.CC))
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Ticket.New.Critical.BCC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.Critical.BCC))
+		t.FailNow()
+	}
+
 	if config.Notifications.Comment.New.Type != "EMAIL" {
 		t.Logf("Actual value: %v Expected value: EMAIL", config.Notifications.Comment.New.Type)
 		t.FailNow()
@@ -393,6 +467,21 @@ func TestConfigure(t *testing.T) {
 
 	if config.Notifications.Comment.New.Recipients[0] != "support@example.com" {
 		t.Logf("Actual value: %v Expected value: support@example.com", config.Notifications.Comment.New.Recipients[0])
+		t.FailNow()
+	}
+
+	if config.Notifications.Comment.New.Sender != "kiosk@example.com" {
+		t.Logf("Actual value: %v Expected value: kiosk@example.com", config.Notifications.Ticket.New.High.Sender)
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Comment.New.CC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.High.CC))
+		t.FailNow()
+	}
+
+	if len(config.Notifications.Comment.New.BCC) != 0 {
+		t.Logf("Actual value: %v Expected value: 0", len(config.Notifications.Ticket.New.High.BCC))
 		t.FailNow()
 	}
 

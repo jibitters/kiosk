@@ -502,6 +502,9 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
+				Sender:           service.config.Notifications.Ticket.New.Low.Sender,
+				Cc:               service.config.Notifications.Ticket.New.Low.CC,
+				Bcc:              service.config.Notifications.Ticket.New.Low.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Low.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)
@@ -512,6 +515,9 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
+				Sender:           service.config.Notifications.Ticket.New.Medium.Sender,
+				Cc:               service.config.Notifications.Ticket.New.Medium.CC,
+				Bcc:              service.config.Notifications.Ticket.New.Medium.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Medium.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)
@@ -522,6 +528,9 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
+				Sender:           service.config.Notifications.Ticket.New.High.Sender,
+				Cc:               service.config.Notifications.Ticket.New.High.CC,
+				Bcc:              service.config.Notifications.Ticket.New.High.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.High.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)
@@ -532,6 +541,9 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
+				Sender:           service.config.Notifications.Ticket.New.Critical.Sender,
+				Cc:               service.config.Notifications.Ticket.New.Critical.CC,
+				Bcc:              service.config.Notifications.Ticket.New.Critical.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Critical.Recipients,
 			})
 			service.nats.Publish(service.config.Notifier.Subject, protobytes)

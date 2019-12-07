@@ -163,6 +163,9 @@ func (service *CommentService) notify(request *rpc.Comment) {
 		Message:          fmt.Sprintf(newCommentSMSTemplate, request.TicketId),
 		Subject:          fmt.Sprintf(newCommentEmailSubjectTemplate, request.TicketId),
 		Body:             newCommentEmailBodyTemplate,
+		Sender:           service.config.Notifications.Comment.New.Sender,
+		Cc:               service.config.Notifications.Comment.New.CC,
+		Bcc:              service.config.Notifications.Comment.New.BCC,
 		Recipient:        service.config.Notifications.Comment.New.Recipients,
 	})
 
