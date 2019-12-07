@@ -18,7 +18,7 @@ The requirements to test and build the project are as follow:
 |golang/protobuf                                                               |1.3.2  |
 |postgres                                                                      |11.6   |
 |nats                                                                          |2.1.2  |
-|[notifier](https://github.com/jibitters/notifier)                             |2.1.2  |
+|[notifier](https://github.com/jibitters/notifier)                             |latest |
 
 To build an executable instance of the project, use:
 
@@ -40,7 +40,7 @@ And to build a docker image (Note: Images also available on [Docker Hub](https:/
 
 Kiosk provides two different types of interfaces, one is based on gRPC as protobuf definitions and the other is REST API.
 
-|Type                                                      |
-|---                                                       |
-|[Protobuf Definitions](api/protobuf-spec)                 |
-|[REST API Specification](api/rest-spec)                   |
+|Type                                                                          |
+|---                                                                           |
+|[Protobuf Definitions](api/protobuf-spec)                                     |
+|[REST API Specification](api/rest-spec)                                       |
