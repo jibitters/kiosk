@@ -31,6 +31,8 @@ import (
 // Command line options to parse.
 var (
 	config = flag.String("config", "./configs/kiosk.json", "JSON configuration file path.")
+	pguser = flag.String("pguser", "", "Postgres database user. If provided rewrites the value of postgres.user in configuration file.")
+	pgpass = flag.String("pgpass", "", "Postgres database password. If provided rewrites the value of postgres.password in configuration file.")
 )
 
 // The kiosk application definition.
@@ -69,6 +71,14 @@ func (k *kiosk) configure() {
 
 // Tries to connect to a postgres instance and then runs the database migration.
 func (k *kiosk) migrate() {
+	if *pguser != "" {
+		k.config.Postgres.User = *pguser
+	}
+
+	if *pgpass != "" {
+		k.config.Postgres.Password = *pgpass
+	}
+
 	if err := database.Migrate(k.config); err != nil {
 		k.stop()
 		k.logger.Fatal("failed to run database migration: %v", err)
@@ -79,6 +89,14 @@ func (k *kiosk) migrate() {
 
 // Tries to setup a connection to postgres instance.
 func (k *kiosk) connectToDatabase() {
+	if *pguser != "" {
+		k.config.Postgres.User = *pguser
+	}
+
+	if *pgpass != "" {
+		k.config.Postgres.Password = *pgpass
+	}
+
 	db, err := database.ConnectToDatabase(k.config)
 	if err != nil {
 		k.stop()
