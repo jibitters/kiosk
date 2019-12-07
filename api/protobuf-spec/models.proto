@@ -35,9 +35,10 @@ enum TicketImportanceLevel {
 
 enum TicketStatus {
     NEW = 0;
-    RESOLVED = 1;
-    CLOSED = 2;
-    BLOCKED = 3;
+    REPLIED = 1;
+    RESOLVED = 2;
+    CLOSED = 3;
+    BLOCKED = 4;
 }
 
 message Comment {

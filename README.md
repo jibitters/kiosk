@@ -8,23 +8,17 @@
 
 A typical ticketing system that provides both gRPC and REST interfaces. This project is intended to be used by internal microservices so we recommend to not expose interfaces directly to the public network.
 
-## How to build
+## How to test and build
 
 The requirements to test and build the project are as follow:
 
-|Requirement                           |Version|
-|---                                   |---    |
-|protoc                                |3.9.2  |
-|golang/protobuf                       |1.3.2  |
-|postgres                              |11.6   |
-|nats                                  |2.1.2  |
-
-Optional requirements are as follow:
-
-|Requirement                           |Version|
-|---                                   |---    |
-|prometheus                            |latest |
-|grafana                               |latest |
+|Requirement                                                                   |Version|
+|---                                                                           |---    |
+|protoc                                                                        |3.9.2  |
+|golang/protobuf                                                               |1.3.2  |
+|postgres                                                                      |11.6   |
+|nats                                                                          |2.1.2  |
+|[notifier](https://github.com/jibitters/notifier)                             |2.1.2  |
 
 To build an executable instance of the project, use:
 
