@@ -23,6 +23,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
     "content": "Hi"
 }
 ```
+------
 
 #### Create ticket request. Creates a new ticket with provided values.
 
@@ -53,6 +54,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```json
 {}
 ```
+------
 
 #### Read ticket request. Returns back a ticket and all associated comments by using its id.
 
@@ -86,6 +88,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
     "updated_at": "2019-12-08T10:16:41.635862Z"
 }
 ```
+------
 
 #### Update ticket request. Updates an already exists ticket with provided values.
 
@@ -108,6 +111,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```json
 {}
 ```
+------
 
 #### Delete ticket request. Deletes ticket and all associated comments by using its id.
 
@@ -119,6 +123,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```json
 {}
 ```
+------
 
 #### Filter tickets request.
 
@@ -190,6 +195,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
     }
 }
 ```
+------
 
 #### Create comment request. Creates a new comment with provided values.
 
@@ -214,6 +220,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```json
 {}
 ```
+------
 
 #### Update comment request. Updates an already exists comment with provided values.
 
@@ -233,6 +240,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```json
 {}
 ```
+------
 
 #### Delete comment request.
 
@@ -244,6 +252,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```json
 {}
 ```
+------
 
 ## Error Handling
 
