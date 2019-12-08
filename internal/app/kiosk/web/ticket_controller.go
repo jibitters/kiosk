@@ -172,7 +172,7 @@ func filterTickets(service *services.TicketService, w http.ResponseWriter, reque
 		Issuer:                issuer,
 		Owner:                 owner,
 		TicketImportanceLevel: rpc.TicketImportanceLevel(rpc.TicketImportanceLevel_value[ticketImportanceLevel]),
-		TicketStatus:          rpc.TicketStatus(rpc.TicketImportanceLevel_value[ticketStatus]),
+		TicketStatus:          rpc.TicketStatus(rpc.TicketStatus_value[ticketStatus]),
 		FromDate:              fromDate,
 		ToDate:                toDate,
 		Page:                  &rpc.Page{Number: int32(pn), Size: int32(ps)},

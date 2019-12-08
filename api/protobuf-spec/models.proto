@@ -27,18 +27,20 @@ message Ticket {
 }
 
 enum TicketImportanceLevel {
-    LOW = 0;
-    MEDIUM = 1;
-    HIGH = 2;
-    CRITICAL = 3;
+    ZERO = 0;
+    LOW = 1;
+    MEDIUM = 2;
+    HIGH = 3;
+    CRITICAL = 4;
 }
 
 enum TicketStatus {
-    NEW = 0;
-    REPLIED = 1;
-    RESOLVED = 2;
-    CLOSED = 3;
-    BLOCKED = 4;
+    NONE = 0;
+    NEW = 1;
+    REPLIED = 2;
+    RESOLVED = 3;
+    CLOSED = 4;
+    BLOCKED = 5;
 }
 
 message Comment {

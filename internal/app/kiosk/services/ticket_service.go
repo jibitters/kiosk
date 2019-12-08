@@ -139,6 +139,10 @@ func (service *TicketService) validateCreate(request *rpc.Ticket) error {
 		return status.Error(codes.InvalidArgument, "create_ticket.empty_content")
 	}
 
+	if request.TicketImportanceLevel == rpc.TicketImportanceLevel_ZERO {
+		return status.Error(codes.InvalidArgument, "create_ticket.invalid_ticket_importance_level")
+	}
+
 	if request.TicketStatus != rpc.TicketStatus_NEW {
 		return status.Error(codes.InvalidArgument, "create_ticket.invalid_ticket_status")
 	}
@@ -159,7 +163,7 @@ func (service *TicketService) validateUpdate(request *rpc.Ticket) error {
 		return status.Error(codes.InvalidArgument, "update_ticket.invalid_id")
 	}
 
-	if request.TicketStatus == rpc.TicketStatus_NEW {
+	if request.TicketStatus == rpc.TicketStatus_NONE || request.TicketStatus == rpc.TicketStatus_NEW {
 		return status.Error(codes.InvalidArgument, "update_ticket.invalid_ticket_status")
 	}
 
@@ -370,6 +374,11 @@ func (service *TicketService) filter(context context.Context, request *rpc.Filte
 			return nil, status.Error(codes.Internal, "filter_tickets.failed")
 		}
 
+		ticket.TicketImportanceLevel = rpc.TicketImportanceLevel(rpc.TicketImportanceLevel_value[ticketImportanceLevel])
+		ticket.TicketStatus = rpc.TicketStatus(rpc.TicketStatus_value[ticketStatus])
+		ticket.IssuedAt = issuedAt.Format(time.RFC3339Nano)
+		ticket.UpdatedAt = updatedAt.Format(time.RFC3339Nano)
+
 		tickets = append(tickets, ticket)
 		ticketsMap[ticket.Id] = ticket
 	}
@@ -433,20 +442,24 @@ func buildFilterTicketsQuery(request *rpc.FilterTicketsRequest) (string, []inter
 
 	counter := 0
 	counter++
-	query.WriteString(` ticket_importance_level = $` + strconv.Itoa(counter))
-	args = append(args, request.TicketImportanceLevel.String())
-
-	counter++
-	query.WriteString(` AND ticket_status = $` + strconv.Itoa(counter))
-	args = append(args, request.TicketStatus.String())
-
-	counter++
-	query.WriteString(` AND updated_at >= $` + strconv.Itoa(counter))
+	query.WriteString(` updated_at >= $` + strconv.Itoa(counter))
 	args = append(args, request.FromDate)
 
 	counter++
 	query.WriteString(` AND updated_at < $` + strconv.Itoa(counter))
 	args = append(args, request.ToDate)
+
+	if request.TicketImportanceLevel != rpc.TicketImportanceLevel_ZERO {
+		counter++
+		query.WriteString(` AND ticket_importance_level = $` + strconv.Itoa(counter))
+		args = append(args, request.TicketImportanceLevel.String())
+	}
+
+	if request.TicketStatus != rpc.TicketStatus_NONE {
+		counter++
+		query.WriteString(` AND ticket_status = $` + strconv.Itoa(counter))
+		args = append(args, request.TicketStatus.String())
+	}
 
 	if request.Issuer != "" {
 		counter++
@@ -461,7 +474,7 @@ func buildFilterTicketsQuery(request *rpc.FilterTicketsRequest) (string, []inter
 	}
 
 	counter++
-	query.WriteString(` ORDER BY issued_at DESC OFFSET $` + strconv.Itoa(counter))
+	query.WriteString(` ORDER BY updated_at DESC OFFSET $` + strconv.Itoa(counter))
 	args = append(args, offset)
 
 	counter++

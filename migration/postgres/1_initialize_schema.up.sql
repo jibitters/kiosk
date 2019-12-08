@@ -13,7 +13,7 @@ CREATE TABLE tickets (
     PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_tickets_owner_ticket_importance_level_ticket_status_issued_at ON tickets (owner, ticket_importance_level, ticket_status, issued_at);
+CREATE INDEX idx_tickets_owner_ticket_importance_level_ticket_status_updated_at ON tickets (owner, ticket_importance_level, ticket_status, updated_At);
 
 -- Comments table definition.
 CREATE TABLE comments (

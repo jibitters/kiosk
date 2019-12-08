@@ -31,38 +31,35 @@ import (
 
 const firstMigrationSchema = `
 -- Tickets table definition.
-	CREATE TABLE tickets (
-	    id                                 BIGSERIAL NOT NULL,
-	    issuer                             VARCHAR(40) NOT NULL,
-	    owner                              VARCHAR(40) NOT NULL,
-	    subject                            VARCHAR(255) NOT NULL,
-	    content                            TEXT NOT NULL,
-	    metadata                           TEXT,
-	    ticket_importance_level            VARCHAR(20) NOT NULL,
-	    ticket_status                      VARCHAR(20) NOT NULL,
-	    issued_at                          TIMESTAMP NOT NULL,
-	    updated_at                         TIMESTAMP NOT NULL,
-	    PRIMARY KEY (id)
-	);
+CREATE TABLE tickets (
+    id                                 BIGSERIAL NOT NULL,
+    issuer                             VARCHAR(40) NOT NULL,
+    owner                              VARCHAR(40) NOT NULL,
+    subject                            VARCHAR(255) NOT NULL,
+    content                            TEXT NOT NULL,
+    metadata                           TEXT,
+    ticket_importance_level            VARCHAR(20) NOT NULL,
+    ticket_status                      VARCHAR(20) NOT NULL,
+    issued_at                          TIMESTAMP NOT NULL,
+    updated_at                         TIMESTAMP NOT NULL,
+    PRIMARY KEY (id)
+);
 
-	CREATE INDEX idx_tickets_issuer_issued_at ON tickets (issuer, issued_at DESC);
-	CREATE INDEX idx_tickets_owner_issued_at ON tickets (owner, issued_at DESC);
-	CREATE INDEX idx_tickets_ticket_importance_level_ticket_status ON tickets (ticket_importance_level, ticket_status);
+CREATE INDEX idx_tickets_owner_ticket_importance_level_ticket_status_updated_at ON tickets (owner, ticket_importance_level, ticket_status, updated_At);
 
-	-- Comments table definition.
-	CREATE TABLE comments (
-	    id                                 BIGSERIAL NOT NULL,
-	    ticket_id                          BIGINT REFERENCES tickets,
-	    owner                              VARCHAR(40) NOT NULL,
-	    content                            TEXT NOT NULL,
-	    metadata                           TEXT,
-	    created_at                         TIMESTAMP NOT NULL,
-	    updated_at                         TIMESTAMP NOT NULL,
-	    PRIMARY KEY (id)
-	);
+-- Comments table definition.
+CREATE TABLE comments (
+    id                                 BIGSERIAL NOT NULL,
+    ticket_id                          BIGINT REFERENCES tickets,
+    owner                              VARCHAR(40) NOT NULL,
+    content                            TEXT NOT NULL,
+    metadata                           TEXT,
+    created_at                         TIMESTAMP NOT NULL,
+    updated_at                         TIMESTAMP NOT NULL,
+    PRIMARY KEY (id)
+);
 
-	CREATE INDEX idx_comments_ticket_id ON comments (ticket_id);
-	CREATE INDEX idx_comments_owner_created_at ON comments (owner, created_at DESC);`
+CREATE INDEX idx_comments_ticket_id_created_at ON comments (ticket_id, created_at);`
 
 func setupPostgresAndRunMigration() (testcontainers.Container, *pgxpool.Pool, error) {
 	// Starting postgres container.
@@ -206,6 +203,17 @@ func TestCreate_InvalidArgument(t *testing.T) {
 		TicketStatus:          rpc.TicketStatus_NEW,
 	}
 	createShouldReturnInvalidArgument(t, service, ticket, "create_ticket.empty_content")
+
+	ticket = &rpc.Ticket{
+		Issuer:                "Jibit",
+		Owner:                 "09203091992",
+		Subject:               "Documentation",
+		Content:               "Hello, i need some help about your technical documentation.",
+		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
+		TicketImportanceLevel: rpc.TicketImportanceLevel_ZERO,
+		TicketStatus:          rpc.TicketStatus_RESOLVED,
+	}
+	createShouldReturnInvalidArgument(t, service, ticket, "create_ticket.invalid_ticket_importance_level")
 
 	ticket = &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -459,6 +467,12 @@ func TestUpdate_InvalidArgument(t *testing.T) {
 		TicketStatus: rpc.TicketStatus_NEW,
 	}
 	updateShouldReturnInvalidArgument(t, service, ticket, "update_ticket.invalid_id")
+
+	ticket = &rpc.Ticket{
+		Id:           1,
+		TicketStatus: rpc.TicketStatus_NONE,
+	}
+	updateShouldReturnInvalidArgument(t, service, ticket, "update_ticket.invalid_ticket_status")
 
 	ticket = &rpc.Ticket{
 		Id:           1,
@@ -767,7 +781,6 @@ func TestFilter(t *testing.T) {
 		Content:  "Hello, please find API related docs on website.",
 		Metadata: "{\"owner_ip\": \"185.186.187.188\"}",
 	}
-
 	if err := commentService.insertOne(context.Background(), comment); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
@@ -842,28 +855,62 @@ func TestFilter(t *testing.T) {
 		t.FailNow()
 	}
 
-	if len(response.Tickets) != 4 {
-		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 4)
+	if len(response.Tickets) != 5 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 5)
 		t.FailNow()
 	}
 
-	if response.Tickets[0].Subject != "Subject4" {
-		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject4")
+	if response.Tickets[0].Subject != "Subject5" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject5")
 		t.FailNow()
 	}
 
-	if response.Tickets[1].Subject != "Subject3" {
-		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject3")
+	if response.Tickets[1].Subject != "Subject4" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[1].Subject, "Subject4")
 		t.FailNow()
 	}
 
-	if response.Tickets[2].Subject != "Subject2" {
-		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject2")
+	if response.Tickets[2].Subject != "Subject3" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[2].Subject, "Subject3")
 		t.FailNow()
 	}
 
-	if response.Tickets[3].Subject != "Subject1" {
-		t.Logf("Actual: %v Expected: %v", response.Tickets[0].Subject, "Subject1")
+	if response.Tickets[3].Subject != "Subject2" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[3].Subject, "Subject2")
+		t.FailNow()
+	}
+
+	if response.Tickets[4].Subject != "Subject1" {
+		t.Logf("Actual: %v Expected: %v", response.Tickets[5].Subject, "Subject1")
+		t.FailNow()
+	}
+
+	if response.Page.Number != filter.Page.Number {
+		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
+		t.FailNow()
+	}
+
+	if response.Page.Size != filter.Page.Size {
+		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
+		t.FailNow()
+	}
+
+	if response.Page.HasNext != false {
+		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
+		t.FailNow()
+	}
+
+	filter = &rpc.FilterTicketsRequest{
+		Page: &rpc.Page{Number: 1, Size: 5},
+	}
+	response, err = service.Filter(context.Background(), filter)
+	if err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
+
+	if len(response.Tickets) != 5 {
+		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 5)
 		t.FailNow()
 	}
 
@@ -906,35 +953,6 @@ func TestFilter(t *testing.T) {
 		t.FailNow()
 	}
 
-	if response.Page.HasNext != false {
-		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, false)
-		t.FailNow()
-	}
-
-	filter = &rpc.FilterTicketsRequest{
-		Page: &rpc.Page{Number: 1, Size: 3},
-	}
-	response, err = service.Filter(context.Background(), filter)
-	if err != nil {
-		t.Logf("Error : %v", err)
-		t.FailNow()
-	}
-
-	if len(response.Tickets) != 3 {
-		t.Logf("Actual: %v Expected: %v", len(response.Tickets), 3)
-		t.FailNow()
-	}
-
-	if response.Page.Number != filter.Page.Number {
-		t.Logf("Actual: %v Expected: %v", response.Page.Number, filter.Page.Number)
-		t.FailNow()
-	}
-
-	if response.Page.Size != filter.Page.Size {
-		t.Logf("Actual: %v Expected: %v", response.Page.Size, filter.Page.Size)
-		t.FailNow()
-	}
-
 	if response.Page.HasNext != true {
 		t.Logf("Actual: %v Expected: %v", response.Page.HasNext, true)
 		t.FailNow()
@@ -942,7 +960,7 @@ func TestFilter(t *testing.T) {
 
 	filter = &rpc.FilterTicketsRequest{
 		Issuer: "JIBit",
-		Page:   &rpc.Page{Number: 2, Size: 1},
+		Page:   &rpc.Page{Number: 3, Size: 1},
 	}
 	response, err = service.Filter(context.Background(), filter)
 	if err != nil {
