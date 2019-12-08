@@ -191,6 +191,60 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 }
 ```
 
+#### Create comment request. Creates a new comment with provided values.
+
+|Method        |Path                                           |Headers                        |
+|---           |---                                            |---                            |
+|POST          |/v1/comments                                   |Content-Type: application/json |
+
+###### Request Body
+```json
+{
+    "ticket_id": "1",
+    "owner": "user@example.com",
+    "content": "Hello, i have some technical issue with your API documentation. Please help!",
+    "metadata": "{\"ip\": \"185.186.187.188\"}"
+}
+```
+
+###### Notes
+- owner: Who is this ticket for?
+
+###### Response Body
+```json
+{}
+```
+
+#### Update comment request. Updates an already exists comment with provided values.
+
+|Method        |Path                                           |Headers                        |
+|---           |---                                            |---                            |
+|PUT           |/v1/comments                                   |Content-Type: application/json |
+
+###### Request Body
+```json
+{
+    "id": "1",
+    "metadata": ""
+}
+```
+
+###### Response Body
+```json
+{}
+```
+
+#### Delete comment request.
+
+|Method        |Path                                           |
+|---           |---                                            |
+|DELETE        |/v1/comments/{id}                              |
+
+###### Response Body
+```json
+{}
+```
+
 ## Error Handling
 
 As you may know 4xx and 5xx statuses indicate an error and the response body is as follow:
