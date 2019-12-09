@@ -132,7 +132,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 |GET           |/v1/tickets?page_number=1&page_size=10         |
 
 ###### Notes
-- Other posibble query strings: issuer, owner, ticket_importance_level, ticket_status, from_date, to_data.
+- Other possible query strings: issuer, owner, ticket_importance_level, ticket_status, from_date, to_data.
 
 ###### Response Body
 ```json
