@@ -1,5 +1,5 @@
-// Copyright 2019 The Jibit Team. All rights reserved.
-// Use of this source code is governed by an Apache Style license that can be found in the LICENSE.md file.
+// Copyright 2019 The JIBit Team. All rights reserved.
+// Use of this source code is governed by an Apache Style license that can be found in the LICENSE file.
 
 package configuration
 
@@ -185,9 +185,14 @@ func TestConfigure(t *testing.T) {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			t.Logf("Error : %v", err)
+			t.FailNow()
+		}
+	}()
 
-	file.WriteString(`
+	if _, err := file.WriteString(`
 	{
 		"application": {
 			"metrics" : true,
@@ -277,7 +282,10 @@ func TestConfigure(t *testing.T) {
 			"port": 8080
 		}
 	}
-	`)
+	`); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
 
 	config, err := Configure(logging.NewWithLevel("info"), file.Name())
 	if err != nil {
@@ -520,9 +528,14 @@ func TestConfigure_InvalidJsonFormat(t *testing.T) {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			t.Logf("Error : %v", err)
+			t.FailNow()
+		}
+	}()
 
-	file.WriteString(`
+	if _, err := file.WriteString(`
 		"application": {
 			"metrics" : true,
 			"metrics_host" : "localhost",
@@ -555,7 +568,10 @@ func TestConfigure_InvalidJsonFormat(t *testing.T) {
 			"port": 8080
 		}
 	}
-	`)
+	`); err != nil {
+		t.Logf("Error : %v", err)
+		t.FailNow()
+	}
 
 	if _, err := Configure(logging.NewWithLevel("info"), file.Name()); err == nil {
 		t.Logf("Expected error here!")

@@ -1,5 +1,5 @@
-// Copyright 2019 The Jibit Team. All rights reserved.
-// Use of this source code is governed by an Apache Style license that can be found in the LICENSE.md file.
+// Copyright 2019 The JIBit Team. All rights reserved.
+// Use of this source code is governed by an Apache Style license that can be found in the LICENSE file.
 
 package services
 
