@@ -79,7 +79,7 @@ func (k *kiosk) migrate() {
 		k.config.Postgres.Password = *pgpass
 	}
 
-	if err := database.Migrate(k.config); err != nil {
+	if err := database.Migrate(k.config, k.logger); err != nil {
 		k.stop()
 		k.logger.Fatal("failed to run database migration: %v", err)
 	}

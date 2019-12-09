@@ -185,12 +185,7 @@ func TestConfigure(t *testing.T) {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			t.Logf("Error : %v", err)
-			t.FailNow()
-		}
-	}()
+	defer file.Close()
 
 	if _, err := file.WriteString(`
 	{
@@ -528,12 +523,7 @@ func TestConfigure_InvalidJsonFormat(t *testing.T) {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			t.Logf("Error : %v", err)
-			t.FailNow()
-		}
-	}()
+	defer file.Close()
 
 	if _, err := file.WriteString(`
 		"application": {

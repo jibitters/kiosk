@@ -104,5 +104,5 @@ func handleError(w http.ResponseWriter, err error) {
 	}
 
 	responseBody, _ := json.Marshal(es)
-	w.Write(responseBody)
+	_, _ = w.Write(responseBody)
 }

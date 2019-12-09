@@ -12,6 +12,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
+	"github.com/jibitters/kiosk/internal/pkg/logging"
 	"github.com/jibitters/kiosk/test/containers"
 	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
@@ -120,7 +121,7 @@ func TestMigrate(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config); err != nil {
+	if err := Migrate(config, logging.New(logging.DebugLevel)); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
@@ -154,7 +155,7 @@ func TestMigrate_ConnectionFailure(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config); err == nil {
+	if err := Migrate(config, logging.New(logging.DebugLevel)); err == nil {
 		t.Logf("Expected error here!")
 		t.FailNow()
 	}
@@ -209,7 +210,7 @@ func TestMigrate_SQLSyntaxError(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config); err == nil {
+	if err := Migrate(config, logging.New(logging.DebugLevel)); err == nil {
 		t.Logf("Expected error here!")
 		t.FailNow()
 	}
@@ -250,12 +251,12 @@ func TestMigrate_NoChange(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config); err != nil {
+	if err := Migrate(config, logging.New(logging.DebugLevel)); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
 
-	if err := Migrate(config); err != nil {
+	if err := Migrate(config, logging.New(logging.DebugLevel)); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}

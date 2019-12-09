@@ -23,7 +23,7 @@ func NewEchoController(service *services.EchoService) *EchoController {
 	return &EchoController{
 		service: service,
 		routes: []Route{
-			Route{http.MethodPost, "/echo", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodPost, "/echo", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				echo(service, w, request)
 			}},
@@ -57,6 +57,6 @@ func echo(service *services.EchoService, w http.ResponseWriter, request *http.Re
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }

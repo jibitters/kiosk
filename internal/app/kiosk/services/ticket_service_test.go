@@ -111,7 +111,7 @@ func setupPostgresAndRunMigration() (testcontainers.Container, *pgxpool.Pool, er
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := database.Migrate(config); err != nil {
+	if err := database.Migrate(config, logging.New(logging.DebugLevel)); err != nil {
 		return nil, nil, err
 	}
 

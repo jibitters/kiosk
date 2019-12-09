@@ -29,12 +29,7 @@ func TestNewContainer(t *testing.T) {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
-	defer func() {
-		if err := CloseContainer(container); err != nil {
-			t.Logf("Error : %v", err)
-			t.FailNow()
-		}
-	}()
+	defer CloseContainer(container)
 
 	ports, err := container.Ports(ContainersContext)
 	if err != nil {

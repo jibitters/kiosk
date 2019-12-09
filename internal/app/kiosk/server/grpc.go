@@ -47,7 +47,7 @@ func server(config *configuration.Config) *grpc.Server {
 	return grpc.NewServer()
 }
 
-func enableMetricsEndpoint(host string, port int) {
+func enableMetricsEndpoint(host string, port int) error {
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
 }

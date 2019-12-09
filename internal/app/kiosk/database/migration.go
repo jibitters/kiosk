@@ -10,10 +10,11 @@ import (
 	migration "github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jibitters/kiosk/internal/app/kiosk/configuration"
+	"github.com/jibitters/kiosk/internal/pkg/logging"
 )
 
 // Migrate tries to connect to a postgres instance with the connection information provided for migration.
-func Migrate(config *configuration.Config) error {
+func Migrate(config *configuration.Config, logger *logging.Logger) error {
 	connectionString := buildConnectionString(config.Postgres.Host, config.Postgres.Port, config.Postgres.Name, config.Postgres.User, config.Postgres.Password, config.Postgres.ConnectionTimeout, config.Postgres.SSLMode)
 
 	db, err := openConnection(connectionString)
@@ -24,7 +25,11 @@ func Migrate(config *configuration.Config) error {
 	if err := pingConnection(db); err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("error on closing database connection: %v", err)
+		}
+	}()
 
 	if err := migrate(db, config.Postgres.MigrationDirectory); err != nil {
 		return err

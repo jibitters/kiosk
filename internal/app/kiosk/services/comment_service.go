@@ -169,5 +169,5 @@ func (service *CommentService) notify(request *rpc.Comment) {
 		Recipient:        service.config.Notifications.Comment.New.Recipients,
 	})
 
-	service.nats.Publish(service.config.Notifier.Subject, protobytes)
+	_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
 }

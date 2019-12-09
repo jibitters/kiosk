@@ -25,27 +25,27 @@ func NewTicketController(service *services.TicketService) *TicketController {
 	return &TicketController{
 		service: service,
 		routes: []Route{
-			Route{http.MethodPost, "/tickets", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodPost, "/tickets", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				createTicket(service, w, request)
 			}},
 
-			Route{http.MethodGet, "/tickets/{id}", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodGet, "/tickets/{id}", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				readTicket(service, w, request)
 			}},
 
-			Route{http.MethodPut, "/tickets", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodPut, "/tickets", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				updateTicket(service, w, request)
 			}},
 
-			Route{http.MethodDelete, "/tickets/{id}", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodDelete, "/tickets/{id}", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				deleteTicket(service, w, request)
 			}},
 
-			Route{http.MethodGet, "/tickets", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodGet, "/tickets", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				filterTickets(service, w, request)
 			}},
@@ -79,8 +79,8 @@ func createTicket(service *services.TicketService, w http.ResponseWriter, reques
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }
 
 func readTicket(service *services.TicketService, w http.ResponseWriter, request *http.Request) {
@@ -98,8 +98,8 @@ func readTicket(service *services.TicketService, w http.ResponseWriter, request 
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }
 
 func updateTicket(service *services.TicketService, w http.ResponseWriter, request *http.Request) {
@@ -123,8 +123,8 @@ func updateTicket(service *services.TicketService, w http.ResponseWriter, reques
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }
 
 func deleteTicket(service *services.TicketService, w http.ResponseWriter, request *http.Request) {
@@ -142,8 +142,8 @@ func deleteTicket(service *services.TicketService, w http.ResponseWriter, reques
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }
 
 func filterTickets(service *services.TicketService, w http.ResponseWriter, request *http.Request) {
@@ -183,6 +183,6 @@ func filterTickets(service *services.TicketService, w http.ResponseWriter, reque
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }

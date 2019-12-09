@@ -25,17 +25,17 @@ func NewCommentController(service *services.CommentService) *CommentController {
 	return &CommentController{
 		service: service,
 		routes: []Route{
-			Route{http.MethodPost, "/comments", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodPost, "/comments", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				createComment(service, w, request)
 			}},
 
-			Route{http.MethodPut, "/comments", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodPut, "/comments", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				updateComment(service, w, request)
 			}},
 
-			Route{http.MethodDelete, "/comments/{id}", func(w http.ResponseWriter, request *http.Request) {
+			{http.MethodDelete, "/comments/{id}", func(w http.ResponseWriter, request *http.Request) {
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
 				deleteComment(service, w, request)
 			}},
@@ -69,8 +69,8 @@ func createComment(service *services.CommentService, w http.ResponseWriter, requ
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }
 
 func updateComment(service *services.CommentService, w http.ResponseWriter, request *http.Request) {
@@ -94,8 +94,8 @@ func updateComment(service *services.CommentService, w http.ResponseWriter, requ
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }
 
 func deleteComment(service *services.CommentService, w http.ResponseWriter, request *http.Request) {
@@ -113,6 +113,6 @@ func deleteComment(service *services.CommentService, w http.ResponseWriter, requ
 	}
 
 	responseBody := new(bytes.Buffer)
-	marshaler.Marshal(responseBody, response)
-	w.Write(responseBody.Bytes())
+	_ = marshaler.Marshal(responseBody, response)
+	_, _ = w.Write(responseBody.Bytes())
 }

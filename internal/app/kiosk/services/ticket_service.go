@@ -232,7 +232,11 @@ func (service *TicketService) findOne(context context.Context, id int64) (*rpc.T
 	batch.Queue(findCommentsQuery, id)
 
 	results := service.db.SendBatch(context, batch)
-	defer results.Close()
+	defer func(){
+		if err := results.Close(); err != nil {
+			service.logger.Error("error on closing batch results: %v", err)
+		}
+	}()
 
 	ticket := &rpc.Ticket{}
 	ticketImportanceLevel := ""
@@ -520,7 +524,7 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.Low.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Low.Recipients,
 			})
-			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
 
 		case rpc.TicketImportanceLevel_MEDIUM:
 			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
@@ -533,7 +537,7 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.Medium.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Medium.Recipients,
 			})
-			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
 
 		case rpc.TicketImportanceLevel_HIGH:
 			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
@@ -546,7 +550,7 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.High.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.High.Recipients,
 			})
-			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
 
 		case rpc.TicketImportanceLevel_CRITICAL:
 			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
@@ -559,7 +563,7 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.Critical.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Critical.Recipients,
 			})
-			service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
 
 		default:
 			service.logger.Warning("no notifier handler for %s importance level!", request.TicketImportanceLevel.String())
