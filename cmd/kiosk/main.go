@@ -1,4 +1,4 @@
-// Copyright 2019 The Jibit Team. All rights reserved.
+// Copyright 2019 The JIBit Team. All rights reserved.
 // Use of this source code is governed by an Apache Style license that can be found in the LICENSE.md file.
 
 //go:generate protoc -I ../../api/protobuf-spec --go_out=plugins=grpc:../../ models.proto
@@ -129,7 +129,7 @@ func (k *kiosk) listen() {
 	k.logger.Info("successfully started gRPC server and listening on %s:%d", k.config.GRPC.Host, k.config.GRPC.Port)
 }
 
-// Listens on provided host and port to provide a series of RESTful apis.
+// Listens on provided host and port to provide a series of REST apis.
 func (k *kiosk) listenWeb() {
 	k.web = web.ListenWeb(k.config, k.logger, k.db, k.nats)
 
@@ -150,7 +150,9 @@ func (k *kiosk) stop() {
 	// First we should stop gRPC to deny incoming calls.
 	if k.web != nil {
 		k.logger.Debug("stopping web server ...")
-		k.web.Close()
+		if err := k.web.Close(); err != nil {
+			k.logger.Error("could not stop web server successfully")
+		}
 	}
 
 	if k.grpc != nil {

@@ -1,4 +1,4 @@
-// Copyright 2019 The Jibit Team. All rights reserved.
+// Copyright 2019 The JIBit Team. All rights reserved.
 // Use of this source code is governed by an Apache Style license that can be found in the LICENSE.md file.
 
 package containers
@@ -29,7 +29,12 @@ func TestNewContainer(t *testing.T) {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
-	defer CloseContainer(container)
+	defer func() {
+		if err := CloseContainer(container); err != nil {
+			t.Logf("Error : %v", err)
+			t.FailNow()
+		}
+	}()
 
 	ports, err := container.Ports(ContainersContext)
 	if err != nil {
