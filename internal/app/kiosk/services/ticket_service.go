@@ -514,7 +514,7 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 	case rpc.TicketStatus_NEW:
 		switch request.TicketImportanceLevel {
 		case rpc.TicketImportanceLevel_LOW:
-			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Low.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
@@ -524,10 +524,10 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.Low.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Low.Recipients,
 			})
-			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
 		case rpc.TicketImportanceLevel_MEDIUM:
-			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Medium.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
@@ -537,10 +537,10 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.Medium.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Medium.Recipients,
 			})
-			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
 		case rpc.TicketImportanceLevel_HIGH:
-			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.High.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
@@ -550,10 +550,10 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.High.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.High.Recipients,
 			})
-			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
 		case rpc.TicketImportanceLevel_CRITICAL:
-			protobytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
+			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Critical.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
@@ -563,7 +563,7 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 				Bcc:              service.config.Notifications.Ticket.New.Critical.BCC,
 				Recipient:        service.config.Notifications.Ticket.New.Critical.Recipients,
 			})
-			_ = service.nats.Publish(service.config.Notifier.Subject, protobytes)
+			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
 		default:
 			service.logger.Warning("no notifier handler for %s importance level!", request.TicketImportanceLevel.String())
