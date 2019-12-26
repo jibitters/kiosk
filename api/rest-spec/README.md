@@ -259,13 +259,13 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 As you may know 4xx and 5xx statuses indicate an error and the response body is as follow:
 
 ```json
-    {
-        "errors":[
-            {
-                "code":"create_ticket.empty_issuer"
-            }
-        ]
-    }
+{
+    "errors":[
+        {
+            "code":"create_ticket.empty_issuer"
+        }
+    ]
+}
 ```
 
 The code field and its possible values are described on the following list:

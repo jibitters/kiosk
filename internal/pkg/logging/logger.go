@@ -47,23 +47,6 @@ type Logger struct {
 	e     *log.Logger // Error level logger.
 }
 
-// WithLevel updates level of logger.
-func (l *Logger) WithLevel(level Level) *Logger {
-	l.level = level
-
-	return l
-}
-
-// WithWriter updates writer (io.Write) of logger. For example it is useful if you want to log on a file.
-func (l *Logger) WithWriter(w io.Writer) *Logger {
-	l.d = log.New(w, DEBUG.String(), flags)
-	l.i = log.New(w, INFO.String(), flags)
-	l.w = log.New(w, WARN.String(), flags)
-	l.e = log.New(w, ERROR.String(), flags)
-
-	return l
-}
-
 // New creates a new logger with INFO as log level and standard error stream as output.
 func New() *Logger {
 	return &Logger{
@@ -89,6 +72,23 @@ func NewWithLevel(level string) *Logger {
 	default:
 		return New().WithLevel(INFO)
 	}
+}
+
+// WithLevel updates level of logger.
+func (l *Logger) WithLevel(level Level) *Logger {
+	l.level = level
+
+	return l
+}
+
+// WithWriter updates writer (io.Write) of logger. For example it is useful if you want to log on a file.
+func (l *Logger) WithWriter(w io.Writer) *Logger {
+	l.d = log.New(w, DEBUG.String(), flags)
+	l.i = log.New(w, INFO.String(), flags)
+	l.w = log.New(w, WARN.String(), flags)
+	l.e = log.New(w, ERROR.String(), flags)
+
+	return l
 }
 
 // Debug prints a debug logging message if log level is equal to debug.

@@ -3,9 +3,9 @@ syntax = "proto3";
 option go_package = "g/rpc/notifier";
 
 message NotificationRequest {
-    Type notificationType = 1;
+    Type notification_type = 1;
     string message = 2;
-    repeated string recipient = 3;
+    repeated string recipients = 3;
     string subject = 4;
     string body = 5;
     string sender = 6;
