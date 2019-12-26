@@ -121,7 +121,7 @@ func TestMigrate(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config, logging.New(logging.DebugLevel)); err != nil {
+	if err := Migrate(logging.New().WithLevel(logging.DEBUG), config); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
@@ -155,7 +155,7 @@ func TestMigrate_ConnectionFailure(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config, logging.New(logging.DebugLevel)); err == nil {
+	if err := Migrate(logging.New().WithLevel(logging.DEBUG), config); err == nil {
 		t.Logf("Expected error here!")
 		t.FailNow()
 	}
@@ -210,7 +210,7 @@ func TestMigrate_SQLSyntaxError(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config, logging.New(logging.DebugLevel)); err == nil {
+	if err := Migrate(logging.New().WithLevel(logging.DEBUG), config); err == nil {
 		t.Logf("Expected error here!")
 		t.FailNow()
 	}
@@ -251,12 +251,12 @@ func TestMigrate_NoChange(t *testing.T) {
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := Migrate(config, logging.New(logging.DebugLevel)); err != nil {
+	if err := Migrate(logging.New().WithLevel(logging.DEBUG), config); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
 
-	if err := Migrate(config, logging.New(logging.DebugLevel)); err != nil {
+	if err := Migrate(logging.New().WithLevel(logging.DEBUG), config); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}

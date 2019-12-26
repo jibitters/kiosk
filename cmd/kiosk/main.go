@@ -35,10 +35,10 @@ var (
 	pgpass = flag.String("pgpass", "", "Postgres database password. If provided rewrites the value of postgres.password in configuration file.")
 )
 
-// The kiosk application definition.
-type kiosk struct {
-	config *configuration.Config
+// Kiosk application definition.
+type Kiosk struct {
 	logger *logging.Logger
+	config *configuration.Config
 	db     *pgxpool.Pool
 	nats   *natsclient.Conn
 	grpc   *grpc.Server
@@ -48,7 +48,7 @@ type kiosk struct {
 func main() {
 	flag.Parse()
 
-	kiosk := &kiosk{config: &configuration.Config{}, logger: logging.New(logging.InfoLevel)}
+	kiosk := &Kiosk{logger: logging.New().WithLevel(logging.INFO), config: &configuration.Config{}}
 	kiosk.configure()
 	kiosk.migrate()
 	kiosk.connectToDatabase()
@@ -59,7 +59,7 @@ func main() {
 }
 
 // Configures kiosk application instance based on provided configuration properties.
-func (k *kiosk) configure() {
+func (k *Kiosk) configure() {
 	config, err := configuration.Configure(k.logger, *config)
 	if err != nil {
 		k.logger.Fatal("failed to load configurations file: %v", err)
@@ -69,8 +69,8 @@ func (k *kiosk) configure() {
 	k.logger = logging.NewWithLevel(k.config.Logger.Level)
 }
 
-// Tries to connect to a postgres instance and then runs the database migration.
-func (k *kiosk) migrate() {
+// Tries to connect to a postgres instance and then runs database migration.
+func (k *Kiosk) migrate() {
 	if *pguser != "" {
 		k.config.Postgres.User = *pguser
 	}
@@ -79,7 +79,7 @@ func (k *kiosk) migrate() {
 		k.config.Postgres.Password = *pgpass
 	}
 
-	if err := database.Migrate(k.config, k.logger); err != nil {
+	if err := database.Migrate(k.logger, k.config); err != nil {
 		k.stop()
 		k.logger.Fatal("failed to run database migration: %v", err)
 	}
@@ -88,7 +88,7 @@ func (k *kiosk) migrate() {
 }
 
 // Tries to setup a connection to postgres instance.
-func (k *kiosk) connectToDatabase() {
+func (k *Kiosk) connectToDatabase() {
 	if *pguser != "" {
 		k.config.Postgres.User = *pguser
 	}
@@ -107,7 +107,7 @@ func (k *kiosk) connectToDatabase() {
 }
 
 // Tries to setup a connection to nats cluster.
-func (k *kiosk) connectToNats() {
+func (k *Kiosk) connectToNats() {
 	nats, err := nats.ConnectToNats(k.config)
 	if err != nil {
 		k.stop()
@@ -118,8 +118,8 @@ func (k *kiosk) connectToNats() {
 }
 
 // Listens on provided host and port to provide a series of gRPC services.
-func (k *kiosk) listen() {
-	server, err := server.Listen(k.config, k.logger, k.db, k.nats)
+func (k *Kiosk) listen() {
+	server, err := server.Listen(k.logger, k.config, k.db, k.nats)
 	if err != nil {
 		k.stop()
 		k.logger.Fatal("failed to start gRPC server: %v", err)
@@ -130,14 +130,14 @@ func (k *kiosk) listen() {
 }
 
 // Listens on provided host and port to provide a series of REST apis.
-func (k *kiosk) listenWeb() {
-	k.web = web.ListenWeb(k.config, k.logger, k.db, k.nats)
+func (k *Kiosk) listenWeb() {
+	k.web = web.ListenWeb(k.logger, k.config, k.db, k.nats)
 
 	k.logger.Info("successfully started web server and listening on %s:%d", k.config.WEB.Host, k.config.WEB.Port)
 }
 
 // Adds interrupt hook for application to be called on os terminate signal.
-func (k *kiosk) addInterruptHook() {
+func (k *Kiosk) addInterruptHook() {
 	signalReceiver := make(chan os.Signal, 1)
 	signal.Notify(signalReceiver, os.Interrupt)
 
@@ -146,8 +146,8 @@ func (k *kiosk) addInterruptHook() {
 }
 
 // Gracefully stops all components.
-func (k *kiosk) stop() {
-	// First we should stop gRPC to deny incoming calls.
+func (k *Kiosk) stop() {
+	// First we should stop web/gRPC servers to deny incoming calls.
 	if k.web != nil {
 		k.logger.Debug("stopping web server ...")
 		if err := k.web.Close(); err != nil {

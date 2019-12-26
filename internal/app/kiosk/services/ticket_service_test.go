@@ -111,7 +111,7 @@ func setupPostgresAndRunMigration() (testcontainers.Container, *pgxpool.Pool, er
 		MigrationDirectory: "file://" + filepath.Dir(first.Name()),
 	}}
 
-	if err := database.Migrate(config, logging.New(logging.DebugLevel)); err != nil {
+	if err := database.Migrate(logging.New().WithLevel(logging.DEBUG), config); err != nil {
 		return nil, nil, err
 	}
 
@@ -159,7 +159,7 @@ func setupNats() (testcontainers.Container, *natsclient.Conn, error) {
 }
 
 func TestCreate_InvalidArgument(t *testing.T) {
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), nil, nil)
 
 	ticket := &rpc.Ticket{
 		Owner:                 "09203091992",
@@ -194,10 +194,10 @@ func TestCreate_InvalidArgument(t *testing.T) {
 	createShouldReturnInvalidArgument(t, service, ticket, "create_ticket.empty_subject")
 
 	ticket = &rpc.Ticket{
-		Issuer:  "Jibit",
-		Owner:   "09203091992",
-		Subject: "Documentation",
-		Content: "	",
+		Issuer:                "Jibit",
+		Owner:                 "09203091992",
+		Subject:               "Documentation",
+		Content:               "	",
 		Metadata:              "{\"owner_ip\": \"185.186.187.188\"}",
 		TicketImportanceLevel: rpc.TicketImportanceLevel_HIGH,
 		TicketStatus:          rpc.TicketStatus_NEW,
@@ -236,7 +236,7 @@ func TestCreate_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -259,7 +259,7 @@ func TestCreate_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -290,7 +290,7 @@ func TestCreate(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -309,7 +309,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestRead_InvalidArgument(t *testing.T) {
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), nil, nil)
 
 	id := &rpc.Id{Id: 0}
 	readShouldReturnInvalidArgument(t, service, id, "read_ticket.invalid_id")
@@ -324,7 +324,7 @@ func TestRead_Notfound(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	readShouldReturnNotfound(t, service, id, "read_ticket.not_found")
@@ -339,7 +339,7 @@ func TestRead_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	readShouldReturnInternal(t, service, id, "read_ticket.failed")
@@ -354,7 +354,7 @@ func TestRead_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	readShouldReturnInternal(t, service, id, "read_ticket.failed")
@@ -377,7 +377,7 @@ func TestRead(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -460,7 +460,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestUpdate_InvalidArgument(t *testing.T) {
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), nil, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           0,
@@ -490,7 +490,7 @@ func TestUpdate_Notfound(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           1,
@@ -508,7 +508,7 @@ func TestUpdate_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           1,
@@ -526,7 +526,7 @@ func TestUpdate_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	ticket := &rpc.Ticket{
 		Id:           1,
@@ -552,7 +552,7 @@ func TestUpdate(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -603,7 +603,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestDelete_InvalidArgument(t *testing.T) {
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), nil, nil)
 
 	id := &rpc.Id{Id: 0}
 	deleteShouldReturnInvalidArgument(t, service, id, "delete_ticket.invalid_id")
@@ -618,7 +618,7 @@ func TestDelete_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	deleteShouldReturnInternal(t, service, id, "delete_ticket.failed")
@@ -633,7 +633,7 @@ func TestDelete_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	id := &rpc.Id{Id: 1}
 	deleteShouldReturnInternal(t, service, id, "delete_ticket.failed")
@@ -656,7 +656,7 @@ func TestDelete(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -688,7 +688,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestFilter_InvalidArgument(t *testing.T) {
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), nil, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), nil, nil)
 
 	filter := &rpc.FilterTicketsRequest{
 		Page: &rpc.Page{Number: 0, Size: 10},
@@ -715,7 +715,7 @@ func TestFilter_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	filter := &rpc.FilterTicketsRequest{
 		Page: &rpc.Page{Number: 1, Size: 10},
@@ -732,7 +732,7 @@ func TestFilter_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nil)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
 
 	filter := &rpc.FilterTicketsRequest{
 		Page: &rpc.Page{Number: 1, Size: 10},
@@ -757,8 +757,8 @@ func TestFilter(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	service := NewTicketService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
-	commentService := NewCommentService(&configuration.Config{}, logging.New(logging.DebugLevel), db, nats)
+	service := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
+	commentService := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
 
 	// Inserting first ticket and its single comment.
 	first := &rpc.Ticket{

@@ -566,9 +566,9 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
 		default:
-			service.logger.Warning("no notifier handler for %s importance level!", request.TicketImportanceLevel.String())
+			service.logger.Warn("no notifier handler for %s importance level!", request.TicketImportanceLevel.String())
 		}
 	default:
-		service.logger.Warning("no notifier handler for %s status!", request.TicketStatus.String())
+		service.logger.Warn("no notifier handler for %s status!", request.TicketStatus.String())
 	}
 }
