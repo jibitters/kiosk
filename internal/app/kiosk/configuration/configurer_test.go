@@ -101,15 +101,6 @@ const defaultConfigurations = `
     }
 }`
 
-const invalidJsonConfigurations = `
-{
-    "application": {
-        "metrics" true,
-        "metrics_host" : "localhost",
-        "metrics_port" : 9091
-    }
-}`
-
 func TestValidateApplicationConfig(t *testing.T) {
 	config := ApplicationConfig{MetricsHost: ""}
 	config.validate()
@@ -535,7 +526,7 @@ func TestConfigure_InvalidJsonFormat(t *testing.T) {
 	}
 	defer file.Close()
 
-	if _, err := file.WriteString(invalidJsonConfigurations); err != nil {
+	if _, err := file.WriteString(`{ "application": { "metrics" true } }`); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
