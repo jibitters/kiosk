@@ -37,7 +37,7 @@ type Route struct {
 }
 
 // ListenWeb creates a new HTTP server and listens on provided host and port.
-func ListenWeb(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) *http.Server {
+func ListenWeb(logger *logging.Logger, config *configuration.Config, db *pgxpool.Pool, nats *natsclient.Conn) *http.Server {
 	echoController := NewEchoController(services.NewEchoService())
 	ticketController := NewTicketController(services.NewTicketService(config, logger, db, nats))
 	commentController := NewCommentController(services.NewCommentService(config, logger, db, nats))

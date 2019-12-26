@@ -113,7 +113,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```
 ------
 
-#### Delete ticket request. Deletes ticket and all associated comments by using its id.
+#### Delete ticket request. Deletes a ticket and all associated comments by using its id.
 
 |Method        |Path                                           |
 |---           |---                                            |
@@ -214,7 +214,7 @@ All successful API calls result in HTTP/1.1 200 OK status code.
 ```
 
 ###### Notes
-- owner: Who is this ticket for?
+- owner: Who is this comment for?
 
 ###### Response Body
 ```json

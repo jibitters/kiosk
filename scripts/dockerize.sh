@@ -6,7 +6,7 @@ VERSION=$(find kiosk-linux-* | sed -E 's/kiosk-linux-v//')
 IMAGE_NAME=jibitters/kiosk
 case $TRAVIS_BRANCH in
 	master)
-	    IMAGE_TAG=$VERSION
+	  IMAGE_TAG=$VERSION
 		;;
 	develop)
 		IMAGE_TAG=$VERSION-INTEGRATION

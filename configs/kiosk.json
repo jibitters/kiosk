@@ -6,7 +6,7 @@
     },
 
     "logger": {
-        "level": "debug"
+        "level": "info"
     },
 
     "postgres": {
@@ -26,7 +26,7 @@
     },
 
     "notifier": {
-        "subject": "notifier.notifications"
+        "subject": "notifier.notifications.x"
     },
 
     "notifications": {
@@ -65,7 +65,7 @@
                 }
             }
         },
-        
+
         "comment": {
             "new": {
                 "type": "EMAIL",

@@ -10,6 +10,106 @@ import (
 	"github.com/jibitters/kiosk/internal/pkg/logging"
 )
 
+const defaultConfigurations = `
+{
+    "application": {
+        "metrics" : true,
+        "metrics_host" : "localhost",
+        "metrics_port" : 9091
+    },
+
+    "logger": {
+        "level": "info"
+    },
+
+    "postgres": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "kiosk",
+        "user": "",
+        "password": "",
+        "connection_timeout": 10,
+        "max_connection" : 8,
+        "ssl_mode": "disable",
+        "migration_directory": "file://migration/postgres"
+    },
+
+    "nats": {
+        "addresses": ["nats://localhost:4222"]
+    },
+
+    "notifier": {
+        "subject": "notifier.notifications.x"
+    },
+
+    "notifications": {
+        "ticket": {
+            "new": {
+                "low": {
+                    "type": "EMAIL",
+                    "recipients": ["support@example.com"],
+                    "sender": "kiosk@example.com",
+                    "cc": [],
+                    "bcc": []
+                },
+
+                "medium": {
+                    "type": "EMAIL",
+                    "recipients": ["support@example.com"],
+                    "sender": "kiosk@example.com",
+                    "cc": [],
+                    "bcc": []
+                },
+
+                "high": {
+                    "type": "EMAIL",
+                    "recipients": ["support@example.com"],
+                    "sender": "kiosk@example.com",
+                    "cc": [],
+                    "bcc": []
+                },
+
+                "critical": {
+                    "type": "SMS",
+                    "recipients": ["09120000000"],
+                    "sender": "",
+                    "cc": [],
+                    "bcc": []
+                }
+            }
+        },
+
+        "comment": {
+            "new": {
+                "type": "EMAIL",
+                "recipients": ["support@example.com"],
+                "sender": "kiosk@example.com",
+                "cc": [],
+                "bcc": []
+            }
+        }
+    },
+
+    "grpc": {
+        "host": "localhost",
+        "port": 9090
+    },
+
+    "web": {
+        "host": "localhost",
+        "port": 8080
+    }
+}`
+
+const invalidJsonConfigurations = `
+{
+    "application": {
+        "metrics" true,
+        "metrics_host" : "localhost",
+        "metrics_port" : 9091
+    }
+}`
+
 func TestValidateApplicationConfig(t *testing.T) {
 	config := ApplicationConfig{MetricsHost: ""}
 	config.validate()
@@ -187,97 +287,7 @@ func TestConfigure(t *testing.T) {
 	}
 	defer file.Close()
 
-	if _, err := file.WriteString(`
-	{
-		"application": {
-			"metrics" : true,
-			"metrics_host" : "localhost",
-			"metrics_port" : 9091
-		},
-	
-		"logger": {
-			"level": "debug"
-		},
-	
-		"postgres": {
-			"host": "localhost",
-			"port": 5432,
-			"name": "kiosk",
-			"user": "",
-			"password": "",
-			"connection_timeout": 10,
-			"max_connection" : 8,
-			"ssl_mode": "disable",
-			"migration_directory": "file://migration/postgres"
-		},
-	
-		"nats": {
-			"addresses": ["nats://localhost:4222"]
-		},
-	
-		"notifier": {
-			"subject": "notifier.notifications"
-		},
-	
-		"notifications": {
-			"ticket": {
-				"new": {
-					"low": {
-						"type": "EMAIL",
-						"recipients": ["support@example.com"],
-						"sender": "kiosk@example.com",
-						"cc": [],
-						"bcc": []
-					},
-	
-					"medium": {
-						"type": "EMAIL",
-						"recipients": ["support@example.com"],
-						"sender": "kiosk@example.com",
-						"cc": [],
-						"bcc": []
-					},
-	
-					"high": {
-						"type": "EMAIL",
-						"recipients": ["support@example.com"],
-						"sender": "kiosk@example.com",
-						"cc": [],
-						"bcc": []
-					},
-	
-					"critical": {
-						"type": "SMS",
-						"recipients": ["09120000000"],
-						"sender": "",
-						"cc": [],
-						"bcc": []
-					}
-				}
-			},
-			
-			"comment": {
-				"new": {
-					"type": "EMAIL",
-					"recipients": ["support@example.com"],
-					"sender": "kiosk@example.com",
-					"cc": [],
-					"bcc": []
-				}
-			}
-		},
-	
-		"grpc": {
-			"host": "localhost",
-			"port": 9090
-		},
-	
-		"web": {
-			"host": "localhost",
-			"port": 8080
-		}
-	}
-	`); err != nil {
+	if _, err := file.WriteString(defaultConfigurations); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
@@ -303,7 +313,7 @@ func TestConfigure(t *testing.T) {
 		t.FailNow()
 	}
 
-	if config.Logger.Level != "debug" {
+	if config.Logger.Level != "info" {
 		t.Logf("Actual value: %v Expected value: debug", config.Logger.Level)
 		t.FailNow()
 	}
@@ -358,7 +368,7 @@ func TestConfigure(t *testing.T) {
 		t.FailNow()
 	}
 
-	if config.Notifier.Subject != "notifier.notifications" {
+	if config.Notifier.Subject != "notifier.notifications.x" {
 		t.Logf("Actual value: %v Expected value: notifier.notifications", config.Notifier.Subject)
 		t.FailNow()
 	}
@@ -525,40 +535,7 @@ func TestConfigure_InvalidJsonFormat(t *testing.T) {
 	}
 	defer file.Close()
 
-	if _, err := file.WriteString(`
-		"application": {
-			"metrics" : true,
-			"metrics_host" : "localhost",
-			"metrics_port" : 9091
-		},
-	
-		"logger": {
-			"level": "debug"
-		},
-	
-		"postgres": {
-			"host": "localhost",
-			"port": 5432,
-			"name": "kiosk",
-			"user": "",
-			"password": "",
-			"connection_timeout": 10,
-			"max_connection" : 8,
-			"ssl_mode": "disable",
-			"migration_directory": "file://migration/postgres"
-		},
-	
-		"grpc": {
-			"host": "localhost",
-			"port": 9090
-		},
-	
-		"web": {
-			"host": "localhost",
-			"port": 8080
-		}
-	}
-	`); err != nil {
+	if _, err := file.WriteString(invalidJsonConfigurations); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}

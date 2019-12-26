@@ -20,7 +20,7 @@ import (
 )
 
 // Listen creates a new gRPC server and listens on provided host and port.
-func Listen(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) (*grpc.Server, error) {
+func Listen(logger *logging.Logger, config *configuration.Config, db *pgxpool.Pool, nats *natsclient.Conn) (*grpc.Server, error) {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.GRPC.Host, config.GRPC.Port))
 	if err != nil {
 		return nil, err
