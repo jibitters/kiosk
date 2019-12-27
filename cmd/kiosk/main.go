@@ -30,7 +30,7 @@ import (
 
 // Command line options to parse.
 var (
-	config = flag.String("config", "./configs/kiosk.json", "JSON configuration file path.")
+	config = flag.String("config", "./configs/kiosk.json", "JSON configuration file's path.")
 	pguser = flag.String("pguser", "", "Postgres database user. If provided rewrites the value of postgres.user in configuration file.")
 	pgpass = flag.String("pgpass", "", "Postgres database password. If provided rewrites the value of postgres.password in configuration file.")
 )
@@ -48,7 +48,7 @@ type Kiosk struct {
 func main() {
 	flag.Parse()
 
-	kiosk := &Kiosk{logger: logging.New().WithLevel(logging.INFO), config: &configuration.Config{}}
+	kiosk := &Kiosk{logger: logging.New(), config: &configuration.Config{}}
 	kiosk.configure()
 	kiosk.migrate()
 	kiosk.connectToDatabase()
@@ -62,7 +62,7 @@ func main() {
 func (k *Kiosk) configure() {
 	config, err := configuration.Configure(k.logger, *config)
 	if err != nil {
-		k.logger.Fatal("failed to load configurations file: %v", err)
+		k.logger.Fatal("failed to load configuration file: %v", err)
 	}
 
 	k.config = config
@@ -83,8 +83,6 @@ func (k *Kiosk) migrate() {
 		k.stop()
 		k.logger.Fatal("failed to run database migration: %v", err)
 	}
-
-	k.logger.Debug("successfully executed database migration")
 }
 
 // Tries to setup a connection to postgres instance.
@@ -151,7 +149,7 @@ func (k *Kiosk) stop() {
 	if k.web != nil {
 		k.logger.Debug("stopping web server ...")
 		if err := k.web.Close(); err != nil {
-			k.logger.Error("could not stop web server successfully")
+			k.logger.Error("could not stop web server")
 		}
 	}
 

@@ -31,17 +31,17 @@ const (
 
 // TicketService is the implementation of ticket related rpc methods.
 type TicketService struct {
-	config *configuration.Config
 	logger *logging.Logger
+	config *configuration.Config
 	db     *pgxpool.Pool
 	nats   *natsclient.Conn
 }
 
 // NewTicketService creates and returns a new ready to use ticket service implementation.
-func NewTicketService(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) *TicketService {
+func NewTicketService(logger *logging.Logger, config *configuration.Config, db *pgxpool.Pool, nats *natsclient.Conn) *TicketService {
 	return &TicketService{
-		config: config,
 		logger: logger,
+		config: config,
 		db:     db,
 		nats:   nats,
 	}
@@ -232,7 +232,7 @@ func (service *TicketService) findOne(context context.Context, id int64) (*rpc.T
 	batch.Queue(findCommentsQuery, id)
 
 	results := service.db.SendBatch(context, batch)
-	defer func(){
+	defer func() {
 		if err := results.Close(); err != nil {
 			service.logger.Error("error on closing batch results: %v", err)
 		}
@@ -517,12 +517,12 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Low.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Recipients:       service.config.Notifications.Ticket.New.Low.Recipients,
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
 				Sender:           service.config.Notifications.Ticket.New.Low.Sender,
 				Cc:               service.config.Notifications.Ticket.New.Low.CC,
 				Bcc:              service.config.Notifications.Ticket.New.Low.BCC,
-				Recipient:        service.config.Notifications.Ticket.New.Low.Recipients,
 			})
 			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
@@ -530,12 +530,12 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Medium.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Recipients:       service.config.Notifications.Ticket.New.Medium.Recipients,
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
 				Sender:           service.config.Notifications.Ticket.New.Medium.Sender,
 				Cc:               service.config.Notifications.Ticket.New.Medium.CC,
 				Bcc:              service.config.Notifications.Ticket.New.Medium.BCC,
-				Recipient:        service.config.Notifications.Ticket.New.Medium.Recipients,
 			})
 			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
@@ -543,12 +543,12 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.High.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Recipients:       service.config.Notifications.Ticket.New.Medium.Recipients,
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
 				Sender:           service.config.Notifications.Ticket.New.High.Sender,
 				Cc:               service.config.Notifications.Ticket.New.High.CC,
 				Bcc:              service.config.Notifications.Ticket.New.High.BCC,
-				Recipient:        service.config.Notifications.Ticket.New.High.Recipients,
 			})
 			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 
@@ -556,12 +556,12 @@ func (service *TicketService) notify(request *rpc.Ticket) {
 			protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 				NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Ticket.New.Critical.Type]),
 				Message:          fmt.Sprintf(newTicketSMSTemplate, request.TicketImportanceLevel, request.Owner),
+				Recipients:       service.config.Notifications.Ticket.New.Medium.Recipients,
 				Subject:          fmt.Sprintf(newTicketEmailSubjectTemplate, request.TicketImportanceLevel, request.Owner),
 				Body:             newTicketEmailBodyTemplate,
 				Sender:           service.config.Notifications.Ticket.New.Critical.Sender,
 				Cc:               service.config.Notifications.Ticket.New.Critical.CC,
 				Bcc:              service.config.Notifications.Ticket.New.Critical.BCC,
-				Recipient:        service.config.Notifications.Ticket.New.Critical.Recipients,
 			})
 			_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
 

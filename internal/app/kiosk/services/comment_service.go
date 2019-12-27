@@ -29,17 +29,17 @@ const (
 
 // CommentService is the implementation of comment related rpc methods.
 type CommentService struct {
-	config *configuration.Config
 	logger *logging.Logger
+	config *configuration.Config
 	db     *pgxpool.Pool
 	nats   *natsclient.Conn
 }
 
 // NewCommentService creates and returns a new ready to use comment service implementation.
-func NewCommentService(config *configuration.Config, logger *logging.Logger, db *pgxpool.Pool, nats *natsclient.Conn) *CommentService {
+func NewCommentService(logger *logging.Logger, config *configuration.Config, db *pgxpool.Pool, nats *natsclient.Conn) *CommentService {
 	return &CommentService{
-		config: config,
 		logger: logger,
+		config: config,
 		db:     db,
 		nats:   nats,
 	}
@@ -161,12 +161,12 @@ func (service *CommentService) notify(request *rpc.Comment) {
 	protoBytes, _ := proto.Marshal(&notifiermodels.NotificationRequest{
 		NotificationType: notifiermodels.NotificationRequest_Type(notifiermodels.NotificationRequest_Type_value[service.config.Notifications.Comment.New.Type]),
 		Message:          fmt.Sprintf(newCommentSMSTemplate, request.TicketId),
+		Recipients:       service.config.Notifications.Comment.New.Recipients,
 		Subject:          fmt.Sprintf(newCommentEmailSubjectTemplate, request.TicketId),
 		Body:             newCommentEmailBodyTemplate,
 		Sender:           service.config.Notifications.Comment.New.Sender,
 		Cc:               service.config.Notifications.Comment.New.CC,
 		Bcc:              service.config.Notifications.Comment.New.BCC,
-		Recipient:        service.config.Notifications.Comment.New.Recipients,
 	})
 
 	_ = service.nats.Publish(service.config.Notifier.Subject, protoBytes)
