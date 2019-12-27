@@ -15,7 +15,15 @@ import (
 
 // Migrate tries to connect to a postgres instance with the connection information provided for migration.
 func Migrate(logger *logging.Logger, config *configuration.Config) error {
-	connectionString := buildConnectionString(config.Postgres.Host, config.Postgres.Port, config.Postgres.Name, config.Postgres.User, config.Postgres.Password, config.Postgres.ConnectionTimeout, config.Postgres.SSLMode)
+	connectionString := buildConnectionString(
+		config.Postgres.Host,
+		config.Postgres.Port,
+		config.Postgres.Name,
+		config.Postgres.User,
+		config.Postgres.Password,
+		config.Postgres.ConnectionTimeout,
+		config.Postgres.SSLMode,
+	)
 
 	db, err := openConnection(connectionString)
 	if err != nil {

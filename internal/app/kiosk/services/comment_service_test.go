@@ -16,7 +16,7 @@ import (
 )
 
 func TestCreateComment_InvalidArgument(t *testing.T) {
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), nil, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, nil, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -42,7 +42,7 @@ func TestCreateComment_TicketNotExists(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -62,7 +62,7 @@ func TestCreateComment_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -82,7 +82,7 @@ func TestCreateComment_DatabaseNetworkFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -110,7 +110,7 @@ func TestCreateComment(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	ticketService := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
+	ticketService := NewTicketService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -127,7 +127,7 @@ func TestCreateComment(t *testing.T) {
 		t.FailNow()
 	}
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nats)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -151,7 +151,7 @@ func TestUpdateComment_Notfound(t *testing.T) {
 	defer containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		Id:       1000,
@@ -171,7 +171,7 @@ func TestUpdateComment_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -191,7 +191,7 @@ func TestUpdateComment_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -219,7 +219,7 @@ func TestUpdateComment(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	ticketService := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
+	ticketService := NewTicketService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -236,7 +236,7 @@ func TestUpdateComment(t *testing.T) {
 		t.FailNow()
 	}
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,
@@ -281,7 +281,7 @@ func TestUpdateComment(t *testing.T) {
 }
 
 func TestDeleteComment_InvalidArgument(t *testing.T) {
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), nil, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, nil, nil)
 
 	id := &rpc.Id{Id: 0}
 	deleteCommentShouldReturnInvalidArgument(t, service, id, "delete_comment.invalid_id")
@@ -296,7 +296,7 @@ func TestDeleteComment_DatabaseConnectionFailure(t *testing.T) {
 	defer containers.CloseContainer(container)
 	db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	id := &rpc.Id{Id: 1}
 	deleteCommentShouldReturnInternal(t, service, id, "delete_comment.failed")
@@ -311,7 +311,7 @@ func TestDeleteComment_DatabaseNetworkFailure(t *testing.T) {
 	containers.CloseContainer(container)
 	defer db.Close()
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	id := &rpc.Id{Id: 1}
 	deleteCommentShouldReturnInternal(t, service, id, "delete_comment.failed")
@@ -334,7 +334,7 @@ func TestDeleteComment(t *testing.T) {
 	defer containers.CloseContainer(natsContainer)
 	defer nats.Close()
 
-	ticketService := NewTicketService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nats)
+	ticketService := NewTicketService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nats)
 
 	ticket := &rpc.Ticket{
 		Issuer:                "Jibit",
@@ -351,7 +351,7 @@ func TestDeleteComment(t *testing.T) {
 		t.FailNow()
 	}
 
-	service := NewCommentService(&configuration.Config{}, logging.New().WithLevel(logging.DEBUG), db, nil)
+	service := NewCommentService(logging.New().WithLevel(logging.DEBUG), &configuration.Config{}, db, nil)
 
 	comment := &rpc.Comment{
 		TicketId: 1,

@@ -39,8 +39,8 @@ type Route struct {
 // ListenWeb creates a new HTTP server and listens on provided host and port.
 func ListenWeb(logger *logging.Logger, config *configuration.Config, db *pgxpool.Pool, nats *natsclient.Conn) *http.Server {
 	echoController := NewEchoController(services.NewEchoService())
-	ticketController := NewTicketController(services.NewTicketService(config, logger, db, nats))
-	commentController := NewCommentController(services.NewCommentService(config, logger, db, nats))
+	ticketController := NewTicketController(services.NewTicketService(logger, config, db, nats))
+	commentController := NewCommentController(services.NewCommentService(logger, config, db, nats))
 
 	router := mux.NewRouter()
 	router = router.PathPrefix(version).Methods(http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete).Subrouter()

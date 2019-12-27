@@ -172,7 +172,7 @@ func (wc *WEBConfig) validate() {
 
 // Configure reads a configuration file from provided file path and populates an instance of Config struct.
 func Configure(logger *logging.Logger, filePath string) (*Config, error) {
-	logger.Info("loading configurations file from %s", filePath)
+	logger.Info("loading configuration file from %s", filePath)
 
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {

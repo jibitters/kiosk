@@ -10,7 +10,7 @@ import (
 	"github.com/jibitters/kiosk/internal/pkg/logging"
 )
 
-const defaultConfigurations = `
+const defaultConfiguration = `
 {
     "application": {
         "metrics" : true,
@@ -278,7 +278,7 @@ func TestConfigure(t *testing.T) {
 	}
 	defer file.Close()
 
-	if _, err := file.WriteString(defaultConfigurations); err != nil {
+	if _, err := file.WriteString(defaultConfiguration); err != nil {
 		t.Logf("Error : %v", err)
 		t.FailNow()
 	}
