@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION=v0.0.18
+VERSION=v0.0.19
 
 go generate ./cmd/kiosk/main.go
 
