@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+package kiosk;
 option go_package = "g/rpc/kiosk";
 
 message Id {
