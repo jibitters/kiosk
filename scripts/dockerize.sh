@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
-# Extracting the version number from the executable file.
+# Extracting the version number from the executable file
 VERSION=$(find kiosk-linux-* | sed -E 's/kiosk-linux-v//')
 
 IMAGE_NAME=jibitters/kiosk
@@ -8,9 +8,11 @@ case $TRAVIS_BRANCH in
 	master)
 	  IMAGE_TAG=$VERSION
 		;;
+
 	develop)
 		IMAGE_TAG=$VERSION-INTEGRATION
 		;;
+
 	*)
 		IMAGE_TAG=$VERSION-DEVELOPMENT
 		;;
