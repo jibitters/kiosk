@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jibitters/kiosk/db/postgres"
 	"github.com/lireza/lib/configuring"
 	"go.uber.org/zap"
 )
@@ -15,12 +17,15 @@ var config = flag.String("config", "./configs/kiosk.json", "configuration file")
 type Kiosk struct {
 	logger *zap.SugaredLogger
 	config *configuring.Config
+	db     *pgxpool.Pool
 }
 
 func main() {
 	kiosk := setup()
 
 	kiosk.configure()
+	kiosk.connectToDatabase()
+	kiosk.migrateDatabase()
 	kiosk.awaitTermination()
 }
 
@@ -47,6 +52,23 @@ func (k *Kiosk) configure() {
 	}
 }
 
+func (k *Kiosk) connectToDatabase() {
+	db, e := postgres.Connect(k.logger, k.config)
+	if e != nil {
+		k.stop()
+		k.logger.Fatal(e.Error())
+	}
+
+	k.db = db
+}
+
+func (k *Kiosk) migrateDatabase() {
+	if e := postgres.Migrate(k.logger, k.config); e != nil {
+		k.stop()
+		k.logger.Fatal(e.Error())
+	}
+}
+
 func (k *Kiosk) awaitTermination() {
 	receiver := make(chan os.Signal)
 	signal.Notify(receiver, os.Interrupt)
@@ -59,5 +81,10 @@ func (k *Kiosk) awaitTermination() {
 
 func (k *Kiosk) stop() {
 	k.logger.Info("Stopping the process ...")
+
+	if k.db != nil {
+		k.db.Close()
+	}
+
 	_ = k.logger.Sync()
 }
