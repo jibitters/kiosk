@@ -1,0 +1,18 @@
+{
+  "logger": {
+    "environment": "DEVELOPMENT"
+  },
+
+  "db": {
+    "postgres": {
+      "connection_string": "postgres://localhost:5432/kiosk?sslmode=disable",
+      "pool_min_connections": "2",
+      "pool_max_connections": "8",
+      "migration_directory": "file://migration/postgres"
+    }
+  },
+
+  "nats": {
+    "addresses": ["nats://localhost:4222"]
+  }
+}
