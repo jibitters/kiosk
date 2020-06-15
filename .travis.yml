@@ -1,18 +1,16 @@
 dist: bionic
 
-addons:
-  snaps:
-    - name: protobuf
-      confinement: classic
+services:
+  - docker
 
 language: go
 
 go:
-  - 1.13.x
+  - 1.14.x
 
 env:
   - global:
-    - REGISTRY_USER=jibitters
+      - REGISTRY_USER=jibitters
 
 stages:
   - test
@@ -22,23 +20,13 @@ jobs:
   include:
     - stage: test
       before_script:
-        - go get -u golang.org/x/lint/golint
-        - go get -u github.com/golang/protobuf/protoc-gen-go
+        - chmod +x ./scripts/setup.sh && ./scripts/setup.sh
       script:
-        - go generate ./cmd/kiosk/main.go
-        - golint -set_exit_status=1 ./...
-        - go vet ./...
         - chmod +x ./scripts/test.sh && ./scripts/test.sh
-      after_success:
-        - bash <(curl -s https://codecov.io/bash)
 
     - stage: publish
       before_script:
-        - go get -u golang.org/x/lint/golint
-        - go get -u github.com/golang/protobuf/protoc-gen-go
+        - chmod +x ./scripts/setup.sh && ./scripts/setup.sh
         - chmod +x ./scripts/build.sh && ./scripts/build.sh
       script:
         - chmod +x ./scripts/dockerize.sh && ./scripts/dockerize.sh
-
-services:
-  - docker
