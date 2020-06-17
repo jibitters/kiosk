@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  pg:
+    image: postgres:11
+    ports:
+      - 54320:5432
+    environment:
+      - POSTGRES_DB=kiosk
+      - POSTGRES_USER=kiosk
+      - POSTGRES_PASSWORD=kiosk
+  nats:
+    image: nats:2.1.0-scratch
+    container_name: nats
+    ports:
+      - 4222:4222
+      - 6222:6222
+      - 8222:8222

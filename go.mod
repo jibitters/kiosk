@@ -8,6 +8,8 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/jackc/pgx/v4 v4.6.0
 	github.com/lireza/lib v0.0.13
+	github.com/nats-io/nats-server/v2 v2.1.7 // indirect
+	github.com/nats-io/nats.go v1.10.0
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
 	github.com/testcontainers/testcontainers-go v0.4.0

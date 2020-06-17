@@ -4,10 +4,12 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jibitters/kiosk/db/postgres"
 	"github.com/lireza/lib/configuring"
+	nc "github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
@@ -15,9 +17,10 @@ var config = flag.String("config", "./configs/kiosk.json", "configuration file")
 
 // Kiosk is the main program encapsulation that holds all required components.
 type Kiosk struct {
-	logger *zap.SugaredLogger
-	config *configuring.Config
-	db     *pgxpool.Pool
+	logger     *zap.SugaredLogger
+	config     *configuring.Config
+	db         *pgxpool.Pool
+	natsClient *nc.Conn
 }
 
 func main() {
@@ -26,6 +29,7 @@ func main() {
 	kiosk.configure()
 	kiosk.connectToDatabase()
 	kiosk.migrateDatabase()
+	kiosk.prepareNatsClient()
 	kiosk.awaitTermination()
 }
 
@@ -69,6 +73,19 @@ func (k *Kiosk) migrateDatabase() {
 	}
 }
 
+func (k *Kiosk) prepareNatsClient() {
+	addresses := k.config.Get("nats.addresses").SliceOfStringOrElse([]string{"nats://localhost:4222"})
+	k.logger.Debug("nats.addresses -> ", addresses)
+
+	client, e := nc.Connect(strings.Join(addresses, ","), nc.Name("Kiosk"))
+	if e != nil {
+		k.stop()
+		k.logger.Fatal(e.Error())
+	}
+
+	k.natsClient = client
+}
+
 func (k *Kiosk) awaitTermination() {
 	receiver := make(chan os.Signal)
 	signal.Notify(receiver, os.Interrupt)
@@ -81,6 +98,10 @@ func (k *Kiosk) awaitTermination() {
 
 func (k *Kiosk) stop() {
 	k.logger.Info("Stopping the process ...")
+
+	if k.natsClient != nil {
+		k.natsClient.Close()
+	}
 
 	if k.db != nil {
 		k.db.Close()
