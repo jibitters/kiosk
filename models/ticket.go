@@ -21,6 +21,7 @@ type Ticket struct {
 	Metadata        string
 	ImportanceLevel TicketImportanceLevel
 	Status          TicketStatus
+	Comments        []*Comment
 }
 
 // TicketRepository is the repository implementation of Ticket model.
@@ -80,10 +81,26 @@ func (r *TicketRepository) LoadByID(ctx context.Context, id int64) (*Ticket, *er
 			created_at,
 			modified_at FROM tickets WHERE id = $1;`
 
+	commentsQ := `SELECT
+					id,
+					ticket_id,
+					owner,
+					content,
+					metadata,
+					created_at,
+					modified_at FROM comments WHERE ticket_id = $1 ORDER BY created_at DESC;`
+
+	batch := &pgx.Batch{}
+	batch.Queue(q, id)
+	batch.Queue(commentsQ, id)
+
+	results := r.db.SendBatch(ctx, batch)
+	defer func() { _ = results.Close() }()
+
 	ticket := &Ticket{}
 	var metadata sql.NullString
 
-	row := r.db.QueryRow(ctx, q, id)
+	row := results.QueryRow()
 	e := row.Scan(
 		&ticket.ID,
 		&ticket.Issuer,
@@ -109,6 +126,40 @@ func (r *TicketRepository) LoadByID(ctx context.Context, id int64) (*Ticket, *er
 
 	if metadata.Valid {
 		ticket.Metadata = metadata.String
+	}
+
+	rows, e := results.Query()
+	if e != nil {
+		et := errors.InternalServerError("unknown", "")
+		r.logger.Error(et.FingerPrint, ": ", e.Error())
+		return nil, et
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		comment := &Comment{}
+		var metadata sql.NullString
+
+		e := rows.Scan(
+			&comment.ID,
+			&comment.TicketID,
+			&comment.Owner,
+			&comment.Content,
+			&metadata,
+			&comment.CreatedAt,
+			&comment.ModifiedAt,
+		)
+		if e != nil {
+			et := errors.InternalServerError("unknown", "")
+			r.logger.Error(et.FingerPrint, ": ", e.Error())
+			return nil, et
+		}
+
+		if metadata.Valid {
+			comment.Metadata = metadata.String
+		}
+
+		ticket.Comments = append(ticket.Comments, comment)
 	}
 
 	return ticket, nil
@@ -140,6 +191,29 @@ func (r *TicketRepository) Update(ctx context.Context, ticket *Ticket) *errors.T
 
 	if command.RowsAffected() == 0 {
 		et := errors.PreconditionFailed("ticket.not_found", "")
+		return et
+	}
+
+	return nil
+}
+
+// DeleteByID tries to delete a ticket and all of its comments.
+func (r *TicketRepository) DeleteByID(ctx context.Context, id int64) *errors.Type {
+	begin := `BEGIN;`
+	commentsQ := `DELETE FROM comments WHERE ticket_id=$1;`
+	q := `DELETE FROM tickets WHERE id=$1;`
+	commit := `COMMIT;`
+
+	batch := &pgx.Batch{}
+	batch.Queue(begin)
+	batch.Queue(commentsQ, id)
+	batch.Queue(q, id)
+	batch.Queue(commit)
+
+	results := r.db.SendBatch(ctx, batch)
+	if e := results.Close(); e != nil {
+		et := errors.InternalServerError("unknown", "")
+		r.logger.Error(et.FingerPrint, ": ", e.Error())
 		return et
 	}
 
