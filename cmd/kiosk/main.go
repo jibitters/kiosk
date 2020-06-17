@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"strings"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jibitters/kiosk/db/postgres"
 	"github.com/lireza/lib/configuring"
