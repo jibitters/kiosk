@@ -13,10 +13,10 @@ type TicketResponse struct {
 	Owner           string                       `json:"owner"`
 	Subject         string                       `json:"subject"`
 	Content         string                       `json:"content"`
-	Metadata        string                       `json:"metadata"`
+	Metadata        string                       `json:"metadata,omitempty"`
 	ImportanceLevel models.TicketImportanceLevel `json:"importanceLevel"`
 	Status          models.TicketStatus          `json:"status"`
-	Comments        []*CommentResponse           `json:"comments"`
+	Comments        []*CommentResponse           `json:"comments,omitempty"`
 	CreatedAt       string                       `json:"createdAt"`
 	ModifiedAt      string                       `json:"modifiedAt"`
 }
@@ -48,7 +48,7 @@ type CommentResponse struct {
 	TicketID   int64  `json:"ticketID"`
 	Owner      string `json:"owner"`
 	Content    string `json:"content"`
-	Metadata   string `json:"metadata"`
+	Metadata   string `json:"metadata,omitempty"`
 	CreatedAt  string `json:"createdAt"`
 	ModifiedAt string `json:"modifiedAt"`
 }

@@ -6,7 +6,7 @@ import (
 
 // FilterTicketsResponse model definition.
 type FilterTicketsResponse struct {
-	Tickets     []*TicketResponse `json:"tickets"`
+	Tickets     []*TicketResponse `json:"tickets,omitempty"`
 	HasNextPage bool              `json:"hasNextPage"`
 }
 

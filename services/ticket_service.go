@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jibitters/kiosk/errors"
 	"github.com/jibitters/kiosk/models"
 	"github.com/jibitters/kiosk/web/data"
@@ -16,16 +17,17 @@ import (
 type TicketService struct {
 	logger           *zap.SugaredLogger
 	natsClient       *nc.Conn
-	ticketRepository models.TicketRepository
+	ticketRepository *models.TicketRepository
 	stop             chan struct{}
 }
 
 // NewTicketService returns a newly created and ready to use TicketService.
-func NewTicketService(logger *zap.SugaredLogger, natsClient *nc.Conn) *TicketService {
+func NewTicketService(logger *zap.SugaredLogger, db *pgxpool.Pool, natsClient *nc.Conn) *TicketService {
 	return &TicketService{
-		logger:     logger,
-		natsClient: natsClient,
-		stop:       make(chan struct{}),
+		logger:           logger,
+		natsClient:       natsClient,
+		ticketRepository: models.NewTicketRepository(logger, db),
+		stop:             make(chan struct{}),
 	}
 }
 
@@ -81,8 +83,7 @@ func (s *TicketService) createTicket(msg *nc.Msg) {
 	defer cancel()
 
 	createTicketRequest := &data.CreateTicketRequest{}
-	e := json.Unmarshal(msg.Data, createTicketRequest)
-	if e != nil {
+	if e := json.Unmarshal(msg.Data, createTicketRequest); e != nil {
 		s.reply(msg, errors.InvalidRequestBody())
 		return
 	}
@@ -105,8 +106,7 @@ func (s *TicketService) loadTicket(msg *nc.Msg) {
 	defer cancel()
 
 	id := &data.ID{}
-	e := json.Unmarshal(msg.Data, id)
-	if e != nil {
+	if e := json.Unmarshal(msg.Data, id); e != nil {
 		s.reply(msg, errors.InvalidRequestBody())
 		return
 	}
@@ -127,8 +127,7 @@ func (s *TicketService) updateTicket(msg *nc.Msg) {
 	defer cancel()
 
 	updateTicketRequest := &data.UpdateTicketRequest{}
-	e := json.Unmarshal(msg.Data, updateTicketRequest)
-	if e != nil {
+	if e := json.Unmarshal(msg.Data, updateTicketRequest); e != nil {
 		s.reply(msg, errors.InvalidRequestBody())
 		return
 	}
@@ -151,8 +150,7 @@ func (s *TicketService) deleteTicket(msg *nc.Msg) {
 	defer cancel()
 
 	id := &data.ID{}
-	e := json.Unmarshal(msg.Data, id)
-	if e != nil {
+	if e := json.Unmarshal(msg.Data, id); e != nil {
 		s.reply(msg, errors.InvalidRequestBody())
 		return
 	}
@@ -170,8 +168,7 @@ func (s *TicketService) filterTickets(msg *nc.Msg) {
 	defer cancel()
 
 	filterTicketsRequest := &data.FilterTicketsRequest{}
-	e := json.Unmarshal(msg.Data, filterTicketsRequest)
-	if e != nil {
+	if e := json.Unmarshal(msg.Data, filterTicketsRequest); e != nil {
 		s.reply(msg, errors.InvalidRequestBody())
 		return
 	}

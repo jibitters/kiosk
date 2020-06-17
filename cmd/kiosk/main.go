@@ -92,7 +92,7 @@ func (k *Kiosk) prepareNatsClient() {
 }
 
 func (k *Kiosk) startTicketService() {
-	ticketService := services.NewTicketService(k.logger, k.natsClient)
+	ticketService := services.NewTicketService(k.logger, k.db, k.natsClient)
 
 	if e := ticketService.Start(); e != nil {
 		k.stop()
