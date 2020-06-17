@@ -10,6 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jibitters/kiosk/db/postgres"
+	"github.com/jibitters/kiosk/services"
 	"github.com/lireza/lib/configuring"
 	nc "github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -19,10 +20,11 @@ var config = flag.String("config", "./configs/kiosk.json", "configuration file")
 
 // Kiosk is the main program encapsulation that holds all required components.
 type Kiosk struct {
-	logger     *zap.SugaredLogger
-	config     *configuring.Config
-	db         *pgxpool.Pool
-	natsClient *nc.Conn
+	logger        *zap.SugaredLogger
+	config        *configuring.Config
+	db            *pgxpool.Pool
+	natsClient    *nc.Conn
+	ticketService *services.TicketService
 }
 
 func main() {
@@ -32,6 +34,7 @@ func main() {
 	kiosk.connectToDatabase()
 	kiosk.migrateDatabase()
 	kiosk.prepareNatsClient()
+	kiosk.startTicketService()
 	kiosk.awaitTermination()
 }
 
@@ -88,6 +91,17 @@ func (k *Kiosk) prepareNatsClient() {
 	k.natsClient = client
 }
 
+func (k *Kiosk) startTicketService() {
+	ticketService := services.NewTicketService(k.logger, k.natsClient)
+
+	if e := ticketService.Start(); e != nil {
+		k.stop()
+		k.logger.Fatal(e.Error())
+	}
+
+	k.ticketService = ticketService
+}
+
 func (k *Kiosk) awaitTermination() {
 	receiver := make(chan os.Signal)
 	signal.Notify(receiver, os.Interrupt)
@@ -100,6 +114,10 @@ func (k *Kiosk) awaitTermination() {
 
 func (k *Kiosk) stop() {
 	k.logger.Info("Stopping the process ...")
+
+	if k.ticketService != nil {
+		k.ticketService.Stop()
+	}
 
 	if k.natsClient != nil {
 		k.natsClient.Close()

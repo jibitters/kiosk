@@ -43,3 +43,15 @@ func (ctr *CreateTicketRequest) Validate() *errors.Type {
 
 	return nil
 }
+
+// AsTicket converts this request model into ticket model.
+func (ctr *CreateTicketRequest) AsTicket() *models.Ticket {
+	return &models.Ticket{
+		Issuer:          ctr.Issuer,
+		Owner:           ctr.Owner,
+		Subject:         ctr.Subject,
+		Content:         ctr.Content,
+		Metadata:        ctr.Metadata,
+		ImportanceLevel: ctr.ImportanceLevel,
+	}
+}

@@ -38,3 +38,14 @@ func (utr *UpdateTicketRequest) Validate() *errors.Type {
 
 	return nil
 }
+
+// AsTicket converts this request model into ticket model.
+func (utr *UpdateTicketRequest) AsTicket() *models.Ticket {
+	return &models.Ticket{
+		Model:           models.Model{ID: utr.ID},
+		Subject:         utr.Subject,
+		Metadata:        utr.Metadata,
+		ImportanceLevel: utr.ImportanceLevel,
+		Status:          utr.Status,
+	}
+}
