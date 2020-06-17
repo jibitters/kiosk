@@ -3,6 +3,8 @@ package models
 import (
 	"context"
 	"database/sql"
+	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -220,6 +222,98 @@ func (r *TicketRepository) DeleteByID(ctx context.Context, id int64) *errors.Typ
 	return nil
 }
 
+// Filter tries to filter tickets.
+func (r *TicketRepository) Filter(ctx context.Context, issuer, owner string, importanceLevel TicketImportanceLevel,
+	status TicketStatus, fromDate, toDate string, pageNumber, pageSize int) ([]*Ticket, bool, *errors.Type) {
+
+	q, args := r.buildFilterQuery(issuer, owner, importanceLevel, status, fromDate, toDate, pageNumber, pageSize)
+
+	rows, e := r.db.Query(ctx, q, args...)
+	if e != nil {
+		et := errors.InternalServerError("unknown", "")
+		r.logger.Error(et.FingerPrint, ": ", e.Error())
+		return nil, false, et
+	}
+	defer rows.Close()
+
+	tickets := make([]*Ticket, 0)
+	ticketsMap := make(map[int64]*Ticket)
+	for rows.Next() {
+		ticket := &Ticket{}
+		var metadata sql.NullString
+
+		e := rows.Scan(
+			&ticket.ID,
+			&ticket.Issuer,
+			&ticket.Owner,
+			&ticket.Subject,
+			&ticket.Content,
+			&metadata,
+			&ticket.ImportanceLevel,
+			&ticket.Status,
+			&ticket.CreatedAt,
+			&ticket.ModifiedAt,
+		)
+		if e != nil {
+			et := errors.InternalServerError("unknown", "")
+			r.logger.Error(et.FingerPrint, ": ", e.Error())
+			return nil, false, et
+		}
+
+		if metadata.Valid {
+			ticket.Metadata = metadata.String
+		}
+
+		tickets = append(tickets, ticket)
+		ticketsMap[ticket.ID] = ticket
+	}
+
+	hasNextPage := len(tickets) > pageSize
+	if hasNextPage {
+		// Drop the extra one.
+		tickets = tickets[:len(tickets)-1]
+	}
+
+	if len(tickets) > 0 {
+		q, args = r.buildLoadCommentsQuery(tickets)
+		rows, e = r.db.Query(ctx, q, args...)
+		if e != nil {
+			et := errors.InternalServerError("unknown", "")
+			r.logger.Error(et.FingerPrint, ": ", e.Error())
+			return nil, false, et
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			comment := &Comment{}
+			var metadata sql.NullString
+
+			e := rows.Scan(
+				&comment.ID,
+				&comment.TicketID,
+				&comment.Owner,
+				&comment.Content,
+				&metadata,
+				&comment.CreatedAt,
+				&comment.ModifiedAt,
+			)
+			if e != nil {
+				et := errors.InternalServerError("unknown", "")
+				r.logger.Error(et.FingerPrint, ": ", e.Error())
+				return nil, false, et
+			}
+
+			if metadata.Valid {
+				comment.Metadata = metadata.String
+			}
+
+			ticketsMap[comment.TicketID].Comments = append(ticketsMap[comment.TicketID].Comments, comment)
+		}
+	}
+
+	return tickets, hasNextPage, nil
+}
+
 // TicketImportanceLevel model.
 type TicketImportanceLevel string
 
@@ -242,3 +336,98 @@ const (
 	TicketStatusClosed   TicketStatus = "CLOSED"
 	TicketStatusBlocked  TicketStatus = "BLOCKED"
 )
+
+func (r *TicketRepository) buildFilterQuery(issuer, owner string, importanceLevel TicketImportanceLevel,
+	status TicketStatus, fromDate, toDate string, pageNumber, pageSize int) (string, []interface{}) {
+
+	offset := (pageNumber - 1) * pageSize
+	limit := pageSize
+
+	args := make([]interface{}, 0)
+	q := strings.Builder{}
+
+	q.WriteString(`SELECT
+						id,
+						issuer,
+						owner,
+						subject,
+						content,
+						metadata,
+						importance_level,
+						status,
+						created_at,
+						modified_at FROM tickets WHERE`)
+
+	counter := 0
+	counter++
+	q.WriteString(` modified_at >= $` + strconv.Itoa(counter))
+	args = append(args, fromDate)
+
+	counter++
+	q.WriteString(` AND modified_at < $` + strconv.Itoa(counter))
+	args = append(args, toDate)
+
+	if issuer != "" {
+		counter++
+		q.WriteString(` AND issuer = $` + strconv.Itoa(counter))
+		args = append(args, issuer)
+	}
+
+	if owner != "" {
+		counter++
+		q.WriteString(` AND owner = $` + strconv.Itoa(counter))
+		args = append(args, owner)
+	}
+
+	if importanceLevel != "" {
+		counter++
+		q.WriteString(` AND importance_level = $` + strconv.Itoa(counter))
+		args = append(args, importanceLevel)
+	}
+
+	if status != "" {
+		counter++
+		q.WriteString(` AND status = $` + strconv.Itoa(counter))
+		args = append(args, status)
+	}
+
+	counter++
+	q.WriteString(` ORDER BY modified_at DESC OFFSET $` + strconv.Itoa(counter))
+	args = append(args, offset)
+
+	counter++
+	q.WriteString(` LIMIT $` + strconv.Itoa(counter))
+	args = append(args, limit+1)
+
+	return q.String(), args
+}
+
+func (r *TicketRepository) buildLoadCommentsQuery(tickets []*Ticket) (string, []interface{}) {
+	q := strings.Builder{}
+	args := make([]interface{}, 0)
+
+	q.WriteString(`SELECT
+			id,
+			ticket_id,
+			owner,
+			content,
+			metadata,
+			created_at,
+			modified_at FROM comments WHERE ticket_id IN (`)
+
+	counter := 0
+	for _, t := range tickets {
+		if counter > 0 {
+			q.WriteString(`, `)
+		}
+		counter++
+		q.WriteString(`$`)
+		q.WriteString(strconv.Itoa(counter))
+
+		args = append(args, t.ID)
+	}
+
+	q.WriteString(`) ORDER BY created_at DESC`)
+
+	return q.String(), args
+}

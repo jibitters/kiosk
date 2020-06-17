@@ -166,7 +166,33 @@ func (s *TicketService) deleteTicket(msg *nc.Msg) {
 }
 
 func (s *TicketService) filterTickets(msg *nc.Msg) {
-	s.reply(msg, errors.NotImplemented())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filterTicketsRequest := &data.FilterTicketsRequest{}
+	e := json.Unmarshal(msg.Data, filterTicketsRequest)
+	if e != nil {
+		s.reply(msg, errors.InvalidRequestBody())
+		return
+	}
+
+	if e := filterTicketsRequest.Validate(); e != nil {
+		s.reply(msg, e)
+		return
+	}
+
+	ts, hasNextPage, e := s.ticketRepository.Filter(ctx, filterTicketsRequest.Issuer, filterTicketsRequest.Owner,
+		filterTicketsRequest.ImportanceLevel, filterTicketsRequest.Status, filterTicketsRequest.FromDate,
+		filterTicketsRequest.ToDate, filterTicketsRequest.PageNumber, filterTicketsRequest.PageSize)
+
+	if e != nil {
+		s.reply(msg, e)
+		return
+	}
+
+	filterTicketsResponse := &data.FilterTicketsResponse{}
+	filterTicketsResponse.LoadFromTickets(ts, hasNextPage)
+	s.reply(msg, filterTicketsResponse)
 }
 
 func (s *TicketService) reply(msg *nc.Msg, t interface{}) {

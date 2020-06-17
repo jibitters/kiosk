@@ -3,6 +3,7 @@ package models_test
 import (
 	"context"
 	"net/http"
+	"time"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -270,6 +271,185 @@ var _ = Describe("Ticket", func() {
 				Ω(e.Errors[0].Code).Should(Equal("comment.not_found"))
 				Ω(e.Errors[0].Message).Should(BeEmpty())
 				Ω(e.HTTPStatusCode).Should(Equal(http.StatusNotFound))
+			})
+		})
+
+		Context("When Filter called", func() {
+			It("Should filter tickets successfully", func() {
+				ticket1 := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user1@example.com",
+					Subject:         "Technical Problem",
+					Content:         "Hello, i have some issues with REST API Docs!",
+					Metadata:        `{"ip":"192.168.1.1"}`,
+					ImportanceLevel: models.TicketImportanceLevelMedium,
+				}
+
+				e := repository.Insert(context.Background(), ticket1)
+				Ω(e).Should(BeNil())
+
+				comment1 := models.Comment{
+					TicketID: 1,
+					Owner:    "admin@example.com",
+					Content:  "Ok, we will check!",
+					Metadata: `{"ip":"192.168.1.11"}`,
+				}
+
+				e = commentRepository.Insert(context.Background(), comment1)
+				Ω(e).Should(BeNil())
+
+				comment2 := models.Comment{
+					TicketID: 1,
+					Owner:    "user1@example.com",
+					Content:  "Ok",
+					Metadata: `{"ip":"192.168.1.1"}`,
+				}
+
+				e = commentRepository.Insert(context.Background(), comment2)
+				Ω(e).Should(BeNil())
+
+				ticket2 := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user2@example.com",
+					Subject:         "UI Problem",
+					Content:         "Hello, i have some issues with panel!",
+					Metadata:        `{"ip":"192.168.1.2"}`,
+					ImportanceLevel: models.TicketImportanceLevelLow,
+				}
+
+				e = repository.Insert(context.Background(), ticket2)
+				Ω(e).Should(BeNil())
+
+				comment3 := models.Comment{
+					TicketID: 2,
+					Owner:    "admin@example.com",
+					Content:  "Ok, we will check!",
+					Metadata: `{"ip":"192.168.1.11"}`,
+				}
+
+				e = commentRepository.Insert(context.Background(), comment3)
+				Ω(e).Should(BeNil())
+
+				ts, hasNextPage, e := repository.Filter(context.Background(), "", "", "",
+					"", time.Now().UTC().Add(-time.Hour).Format(time.RFC3339Nano), time.Now().UTC().Add(time.Hour).Format(time.RFC3339Nano),
+					1, 10)
+
+				Ω(e).Should(BeNil())
+				Ω(len(ts)).Should(Equal(2))
+				Ω(hasNextPage).Should(Equal(false))
+				Ω(len(ts[0].Comments)).Should(Equal(1))
+				Ω(len(ts[1].Comments)).Should(Equal(2))
+				Ω(ts[1].Comments[0].ModifiedAt.After(ts[1].Comments[1].ModifiedAt)).Should(BeTrue())
+			})
+
+			It("Should filter tickets by issuer", func() {
+				ticket1 := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user1@example.com",
+					Subject:         "Technical Problem",
+					Content:         "Hello, i have some issues with REST API Docs!",
+					Metadata:        `{"ip":"192.168.1.1"}`,
+					ImportanceLevel: models.TicketImportanceLevelMedium,
+				}
+
+				e := repository.Insert(context.Background(), ticket1)
+				Ω(e).Should(BeNil())
+
+				ticket2 := models.Ticket{
+					Issuer:          "Microservice-B",
+					Owner:           "user2@example.com",
+					Subject:         "UI Problem",
+					Content:         "Hello, i have some issues with panel!",
+					Metadata:        `{"ip":"192.168.1.2"}`,
+					ImportanceLevel: models.TicketImportanceLevelLow,
+				}
+
+				e = repository.Insert(context.Background(), ticket2)
+				Ω(e).Should(BeNil())
+
+				ts, hasNextPage, e := repository.Filter(context.Background(), "Microservice-A", "", "",
+					"", time.Now().UTC().Add(-time.Hour).Format(time.RFC3339Nano), time.Now().UTC().Add(time.Hour).Format(time.RFC3339Nano),
+					1, 10)
+
+				Ω(e).Should(BeNil())
+				Ω(len(ts)).Should(Equal(1))
+				Ω(hasNextPage).Should(Equal(false))
+			})
+
+			It("Should filter tickets by owner", func() {
+				ticket1 := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user1@example.com",
+					Subject:         "Technical Problem",
+					Content:         "Hello, i have some issues with REST API Docs!",
+					Metadata:        `{"ip":"192.168.1.1"}`,
+					ImportanceLevel: models.TicketImportanceLevelMedium,
+				}
+
+				e := repository.Insert(context.Background(), ticket1)
+				Ω(e).Should(BeNil())
+
+				ticket2 := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user2@example.com",
+					Subject:         "UI Problem",
+					Content:         "Hello, i have some issues with panel!",
+					Metadata:        `{"ip":"192.168.1.2"}`,
+					ImportanceLevel: models.TicketImportanceLevelLow,
+				}
+
+				e = repository.Insert(context.Background(), ticket2)
+				Ω(e).Should(BeNil())
+
+				ts, hasNextPage, e := repository.Filter(context.Background(), "Microservice-A", "user1@example.com", "",
+					"", time.Now().UTC().Add(-time.Hour).Format(time.RFC3339Nano), time.Now().UTC().Add(time.Hour).Format(time.RFC3339Nano),
+					1, 10)
+
+				Ω(e).Should(BeNil())
+				Ω(len(ts)).Should(Equal(1))
+				Ω(hasNextPage).Should(Equal(false))
+			})
+
+			It("Should return paginated response correctly", func() {
+				ticket1 := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user1@example.com",
+					Subject:         "Technical Problem",
+					Content:         "Hello, i have some issues with REST API Docs!",
+					Metadata:        `{"ip":"192.168.1.1"}`,
+					ImportanceLevel: models.TicketImportanceLevelMedium,
+				}
+
+				e := repository.Insert(context.Background(), ticket1)
+				Ω(e).Should(BeNil())
+
+				ticket2 := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user2@example.com",
+					Subject:         "UI Problem",
+					Content:         "Hello, i have some issues with panel!",
+					Metadata:        `{"ip":"192.168.1.2"}`,
+					ImportanceLevel: models.TicketImportanceLevelLow,
+				}
+
+				e = repository.Insert(context.Background(), ticket2)
+				Ω(e).Should(BeNil())
+
+				ts, hasNextPage, e := repository.Filter(context.Background(), "", "", "",
+					"", time.Now().UTC().Add(-time.Hour).Format(time.RFC3339Nano), time.Now().UTC().Add(time.Hour).Format(time.RFC3339Nano),
+					1, 1)
+
+				Ω(e).Should(BeNil())
+				Ω(len(ts)).Should(Equal(1))
+				Ω(hasNextPage).Should(Equal(true))
+
+				ts, hasNextPage, e = repository.Filter(context.Background(), "", "", "",
+					"", time.Now().UTC().Add(-time.Hour).Format(time.RFC3339Nano), time.Now().UTC().Add(time.Hour).Format(time.RFC3339Nano),
+					2, 1)
+
+				Ω(e).Should(BeNil())
+				Ω(len(ts)).Should(Equal(1))
+				Ω(hasNextPage).Should(Equal(false))
 			})
 		})
 	})

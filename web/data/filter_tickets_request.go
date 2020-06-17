@@ -1,6 +1,8 @@
 package data
 
 import (
+	"time"
+
 	"github.com/jibitters/kiosk/errors"
 	"github.com/jibitters/kiosk/models"
 )
@@ -19,8 +21,12 @@ type FilterTicketsRequest struct {
 
 // Validate validates the request.
 func (ftr *FilterTicketsRequest) Validate() *errors.Type {
-	if len(ftr.Issuer) == 0 {
-		return errors.InvalidArgument("issuer.is_required", "")
+	if ftr.FromDate == "" {
+		ftr.FromDate = "2000-01-01T00:00:00Z"
+	}
+
+	if ftr.ToDate == "" {
+		ftr.ToDate = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 
 	if ftr.PageNumber < 1 {
