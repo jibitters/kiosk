@@ -20,11 +20,12 @@ var config = flag.String("config", "./configs/kiosk.json", "configuration file")
 
 // Kiosk is the main program encapsulation that holds all required components.
 type Kiosk struct {
-	logger        *zap.SugaredLogger
-	config        *configuring.Config
-	db            *pgxpool.Pool
-	natsClient    *nc.Conn
-	ticketService *services.TicketService
+	logger         *zap.SugaredLogger
+	config         *configuring.Config
+	db             *pgxpool.Pool
+	natsClient     *nc.Conn
+	ticketService  *services.TicketService
+	commentService *services.CommentService
 }
 
 func main() {
@@ -35,6 +36,7 @@ func main() {
 	kiosk.migrateDatabase()
 	kiosk.prepareNatsClient()
 	kiosk.startTicketService()
+	kiosk.startCommentService()
 	kiosk.awaitTermination()
 }
 
@@ -102,6 +104,17 @@ func (k *Kiosk) startTicketService() {
 	k.ticketService = ticketService
 }
 
+func (k *Kiosk) startCommentService() {
+	commentService := services.NewCommentService(k.logger, k.db, k.natsClient)
+
+	if e := commentService.Start(); e != nil {
+		k.stop()
+		k.logger.Fatal(e.Error())
+	}
+
+	k.commentService = commentService
+}
+
 func (k *Kiosk) awaitTermination() {
 	receiver := make(chan os.Signal)
 	signal.Notify(receiver, os.Interrupt)
@@ -114,6 +127,10 @@ func (k *Kiosk) awaitTermination() {
 
 func (k *Kiosk) stop() {
 	k.logger.Info("Stopping the process ...")
+
+	if k.commentService != nil {
+		k.commentService.Stop()
+	}
 
 	if k.ticketService != nil {
 		k.ticketService.Stop()

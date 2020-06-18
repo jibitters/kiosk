@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/jibitters/kiosk/errors"
+	"github.com/jibitters/kiosk/models"
 )
 
 // UpdateCommentRequest model definition.
@@ -11,7 +12,15 @@ type UpdateCommentRequest struct {
 }
 
 // Validate validates the request.
-func (ucr *UpdateCommentRequest) Validate() *errors.Type {
+func (r *UpdateCommentRequest) Validate() *errors.Type {
 
 	return nil
+}
+
+// AsComment converts this request model into comment model.
+func (r *UpdateCommentRequest) AsComment() *models.Comment {
+	return &models.Comment{
+		Model:    models.Model{ID: r.ID},
+		Metadata: r.Metadata,
+	}
 }

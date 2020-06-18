@@ -16,27 +16,27 @@ type CreateTicketRequest struct {
 }
 
 // Validate validates the request.
-func (ctr *CreateTicketRequest) Validate() *errors.Type {
-	if len(ctr.Issuer) == 0 {
+func (r *CreateTicketRequest) Validate() *errors.Type {
+	if len(r.Issuer) == 0 {
 		return errors.InvalidArgument("issuer.is_required", "")
 	}
 
-	if len(ctr.Owner) == 0 {
+	if len(r.Owner) == 0 {
 		return errors.InvalidArgument("owner.is_required", "")
 	}
 
-	if len(ctr.Subject) == 0 {
+	if len(r.Subject) == 0 {
 		return errors.InvalidArgument("subject.is_required", "")
 	}
 
-	if len(ctr.Content) == 0 {
+	if len(r.Content) == 0 {
 		return errors.InvalidArgument("content.is_required", "")
 	}
 
-	if ctr.ImportanceLevel != models.TicketImportanceLevelLow &&
-		ctr.ImportanceLevel != models.TicketImportanceLevelMedium &&
-		ctr.ImportanceLevel != models.TicketImportanceLevelHigh &&
-		ctr.ImportanceLevel != models.TicketImportanceLevelCritical {
+	if r.ImportanceLevel != models.TicketImportanceLevelLow &&
+		r.ImportanceLevel != models.TicketImportanceLevelMedium &&
+		r.ImportanceLevel != models.TicketImportanceLevelHigh &&
+		r.ImportanceLevel != models.TicketImportanceLevelCritical {
 
 		return errors.InvalidArgument("importanceLevel.not_valid", "")
 	}
@@ -45,13 +45,13 @@ func (ctr *CreateTicketRequest) Validate() *errors.Type {
 }
 
 // AsTicket converts this request model into ticket model.
-func (ctr *CreateTicketRequest) AsTicket() *models.Ticket {
+func (r *CreateTicketRequest) AsTicket() *models.Ticket {
 	return &models.Ticket{
-		Issuer:          ctr.Issuer,
-		Owner:           ctr.Owner,
-		Subject:         ctr.Subject,
-		Content:         ctr.Content,
-		Metadata:        ctr.Metadata,
-		ImportanceLevel: ctr.ImportanceLevel,
+		Issuer:          r.Issuer,
+		Owner:           r.Owner,
+		Subject:         r.Subject,
+		Content:         r.Content,
+		Metadata:        r.Metadata,
+		ImportanceLevel: r.ImportanceLevel,
 	}
 }

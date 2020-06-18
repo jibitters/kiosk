@@ -11,12 +11,12 @@ type FilterTicketsResponse struct {
 }
 
 // LoadFromTickets loads the fields of current model from provided tickets.
-func (ftr *FilterTicketsResponse) LoadFromTickets(tickets []*models.Ticket, HasNextPage bool) {
+func (r *FilterTicketsResponse) LoadFromTickets(tickets []*models.Ticket, HasNextPage bool) {
 	for _, t := range tickets {
 		ticketResponse := &TicketResponse{}
 		ticketResponse.LoadFromTicket(t)
-		ftr.Tickets = append(ftr.Tickets, ticketResponse)
+		r.Tickets = append(r.Tickets, ticketResponse)
 	}
 
-	ftr.HasNextPage = HasNextPage
+	r.HasNextPage = HasNextPage
 }

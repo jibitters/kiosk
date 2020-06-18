@@ -22,24 +22,24 @@ type TicketResponse struct {
 }
 
 // LoadFromTicket loads the fields of current model from provided ticket.
-func (tr *TicketResponse) LoadFromTicket(ticket *models.Ticket) {
-	tr.ID = ticket.ID
-	tr.Issuer = ticket.Issuer
-	tr.Owner = ticket.Owner
-	tr.Subject = ticket.Subject
-	tr.Content = ticket.Content
-	tr.Metadata = ticket.Metadata
-	tr.ImportanceLevel = ticket.ImportanceLevel
-	tr.Status = ticket.Status
+func (r *TicketResponse) LoadFromTicket(ticket *models.Ticket) {
+	r.ID = ticket.ID
+	r.Issuer = ticket.Issuer
+	r.Owner = ticket.Owner
+	r.Subject = ticket.Subject
+	r.Content = ticket.Content
+	r.Metadata = ticket.Metadata
+	r.ImportanceLevel = ticket.ImportanceLevel
+	r.Status = ticket.Status
 
 	for _, c := range ticket.Comments {
 		cr := &CommentResponse{}
 		cr.LoadFromComment(c)
-		tr.Comments = append(tr.Comments, cr)
+		r.Comments = append(r.Comments, cr)
 	}
 
-	tr.CreatedAt = ticket.CreatedAt.Format(time.RFC3339Nano)
-	tr.ModifiedAt = ticket.ModifiedAt.Format(time.RFC3339Nano)
+	r.CreatedAt = ticket.CreatedAt.Format(time.RFC3339Nano)
+	r.ModifiedAt = ticket.ModifiedAt.Format(time.RFC3339Nano)
 }
 
 // CommentResponse model definition.
@@ -54,12 +54,12 @@ type CommentResponse struct {
 }
 
 // LoadFromComment loads the fields of current model from provided comment.
-func (cr *CommentResponse) LoadFromComment(comment *models.Comment) {
-	cr.ID = comment.ID
-	cr.TicketID = comment.TicketID
-	cr.Owner = comment.Owner
-	cr.Content = comment.Content
-	cr.Metadata = comment.Metadata
-	cr.CreatedAt = comment.CreatedAt.Format(time.RFC3339Nano)
-	cr.ModifiedAt = comment.ModifiedAt.Format(time.RFC3339Nano)
+func (r *CommentResponse) LoadFromComment(comment *models.Comment) {
+	r.ID = comment.ID
+	r.TicketID = comment.TicketID
+	r.Owner = comment.Owner
+	r.Content = comment.Content
+	r.Metadata = comment.Metadata
+	r.CreatedAt = comment.CreatedAt.Format(time.RFC3339Nano)
+	r.ModifiedAt = comment.ModifiedAt.Format(time.RFC3339Nano)
 }

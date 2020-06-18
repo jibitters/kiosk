@@ -20,20 +20,20 @@ type FilterTicketsRequest struct {
 }
 
 // Validate validates the request.
-func (ftr *FilterTicketsRequest) Validate() *errors.Type {
-	if ftr.FromDate == "" {
-		ftr.FromDate = "2000-01-01T00:00:00Z"
+func (r *FilterTicketsRequest) Validate() *errors.Type {
+	if r.FromDate == "" {
+		r.FromDate = "2000-01-01T00:00:00Z"
 	}
 
-	if ftr.ToDate == "" {
-		ftr.ToDate = time.Now().UTC().Format(time.RFC3339Nano)
+	if r.ToDate == "" {
+		r.ToDate = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 
-	if ftr.PageNumber < 1 {
+	if r.PageNumber < 1 {
 		return errors.InvalidArgument("pageNumber.not_valid", "")
 	}
 
-	if ftr.PageSize < 1 {
+	if r.PageSize < 1 {
 		return errors.InvalidArgument("pageSize.not_valid", "")
 	}
 
