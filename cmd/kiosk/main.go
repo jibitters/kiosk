@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -11,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jibitters/kiosk/db/postgres"
 	"github.com/jibitters/kiosk/services"
+	"github.com/jibitters/kiosk/web"
 	"github.com/lireza/lib/configuring"
 	nc "github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -26,6 +29,7 @@ type Kiosk struct {
 	natsClient     *nc.Conn
 	ticketService  *services.TicketService
 	commentService *services.CommentService
+	webServer      *http.Server
 }
 
 func main() {
@@ -37,6 +41,7 @@ func main() {
 	kiosk.prepareNatsClient()
 	kiosk.startTicketService()
 	kiosk.startCommentService()
+	kiosk.startWebServer()
 	kiosk.awaitTermination()
 }
 
@@ -115,6 +120,10 @@ func (k *Kiosk) startCommentService() {
 	k.commentService = commentService
 }
 
+func (k *Kiosk) startWebServer() {
+	k.webServer = web.StartServer(k.logger, k.config)
+}
+
 func (k *Kiosk) awaitTermination() {
 	receiver := make(chan os.Signal)
 	signal.Notify(receiver, os.Interrupt)
@@ -127,6 +136,12 @@ func (k *Kiosk) awaitTermination() {
 
 func (k *Kiosk) stop() {
 	k.logger.Info("Stopping the process ...")
+
+	if k.webServer != nil {
+		if e := k.webServer.Shutdown(context.Background()); e != nil {
+			k.logger.Error(e.Error())
+		}
+	}
 
 	if k.commentService != nil {
 		k.commentService.Stop()

@@ -14,5 +14,16 @@
 
   "nats": {
     "addresses": ["nats://localhost:4222"]
+  },
+
+  "web": {
+    "server": {
+      "host": "localhost",
+      "port": "8080",
+      "read_timeout": "5s",
+      "read_header_timeout": "2s",
+      "write_timeout": "10s",
+      "idle_timeout": "30s"
+    }
   }
 }
