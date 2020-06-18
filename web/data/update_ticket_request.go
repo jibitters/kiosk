@@ -15,23 +15,23 @@ type UpdateTicketRequest struct {
 }
 
 // Validate validates the request.
-func (utr *UpdateTicketRequest) Validate() *errors.Type {
-	if len(utr.Subject) == 0 {
+func (r *UpdateTicketRequest) Validate() *errors.Type {
+	if len(r.Subject) == 0 {
 		return errors.InvalidArgument("subject.is_required", "")
 	}
 
-	if utr.ImportanceLevel != models.TicketImportanceLevelLow &&
-		utr.ImportanceLevel != models.TicketImportanceLevelMedium &&
-		utr.ImportanceLevel != models.TicketImportanceLevelHigh &&
-		utr.ImportanceLevel != models.TicketImportanceLevelCritical {
+	if r.ImportanceLevel != models.TicketImportanceLevelLow &&
+		r.ImportanceLevel != models.TicketImportanceLevelMedium &&
+		r.ImportanceLevel != models.TicketImportanceLevelHigh &&
+		r.ImportanceLevel != models.TicketImportanceLevelCritical {
 
 		return errors.InvalidArgument("importanceLevel.not_valid", "")
 	}
 
-	if utr.Status != models.TicketStatusReplied &&
-		utr.Status != models.TicketStatusResolved &&
-		utr.Status != models.TicketStatusClosed &&
-		utr.Status != models.TicketStatusBlocked {
+	if r.Status != models.TicketStatusReplied &&
+		r.Status != models.TicketStatusResolved &&
+		r.Status != models.TicketStatusClosed &&
+		r.Status != models.TicketStatusBlocked {
 
 		return errors.InvalidArgument("status.not_valid", "")
 	}
@@ -40,12 +40,12 @@ func (utr *UpdateTicketRequest) Validate() *errors.Type {
 }
 
 // AsTicket converts this request model into ticket model.
-func (utr *UpdateTicketRequest) AsTicket() *models.Ticket {
+func (r *UpdateTicketRequest) AsTicket() *models.Ticket {
 	return &models.Ticket{
-		Model:           models.Model{ID: utr.ID},
-		Subject:         utr.Subject,
-		Metadata:        utr.Metadata,
-		ImportanceLevel: utr.ImportanceLevel,
-		Status:          utr.Status,
+		Model:           models.Model{ID: r.ID},
+		Subject:         r.Subject,
+		Metadata:        r.Metadata,
+		ImportanceLevel: r.ImportanceLevel,
+		Status:          r.Status,
 	}
 }
