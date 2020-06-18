@@ -129,3 +129,17 @@ func (r *CommentRepository) Update(ctx context.Context, comment *Comment) *error
 
 	return nil
 }
+
+// DeleteByID tries to delete a comment from comments table.
+func (r *CommentRepository) DeleteByID(ctx context.Context, id int64) *errors.Type {
+	q := `DELETE FROM comments WHERE id=$1;`
+
+	_, e := r.db.Exec(ctx, q, id)
+	if e != nil {
+		et := errors.InternalServerError("unknown", "")
+		r.logger.Error(et.FingerPrint, ": ", e.Error())
+		return et
+	}
+
+	return nil
+}

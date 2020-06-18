@@ -180,5 +180,42 @@ var _ = Describe("Comment", func() {
 				Ω(e.HTTPStatusCode).Should(Equal(http.StatusNotFound))
 			})
 		})
+
+		Context("When DeleteByID called", func() {
+			It("Should delete a comment record from comments table successfully", func() {
+				ticket := models.Ticket{
+					Issuer:          "Microservice-A",
+					Owner:           "user@example.com",
+					Subject:         "Technical Problem",
+					Content:         "Hello, i have some issues with REST API Docs!",
+					Metadata:        `{"ip":"192.168.1.1"}`,
+					ImportanceLevel: models.TicketImportanceLevelMedium,
+				}
+
+				e := ticketRepository.Insert(context.Background(), ticket)
+				Ω(e).Should(BeNil())
+
+				comment := models.Comment{
+					TicketID: 1,
+					Owner:    "admin@example.com",
+					Content:  "Hello, we are working on these.!",
+					Metadata: `{"ip":"192.168.1.11"}`,
+				}
+
+				e = repository.Insert(context.Background(), comment)
+				Ω(e).Should(BeNil())
+
+				e = repository.DeleteByID(context.Background(), 1)
+				Ω(e).Should(BeNil())
+
+				t, e := repository.LoadByID(context.Background(), 1)
+				Ω(t).Should(BeNil())
+				Ω(e).ShouldNot(BeNil())
+				Ω(e.FingerPrint).ShouldNot(BeNil())
+				Ω(e.Errors[0].Code).Should(Equal("comment.not_found"))
+				Ω(e.Errors[0].Message).Should(BeEmpty())
+				Ω(e.HTTPStatusCode).Should(Equal(http.StatusNotFound))
+			})
+		})
 	})
 })
