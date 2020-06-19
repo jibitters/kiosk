@@ -64,7 +64,7 @@ func (s *CommentService) Start() error {
 
 func (s *CommentService) await(ss ...*nc.Subscription) {
 	<-s.stop
-	s.logger.Debug("TicketService: received stop signal!")
+	s.logger.Debug("CommentService: received stop signal!")
 
 	for _, s := range ss {
 		_ = s.Unsubscribe()
