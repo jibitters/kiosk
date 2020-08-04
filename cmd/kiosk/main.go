@@ -121,12 +121,12 @@ func (k *Kiosk) startCommentService() {
 }
 
 func (k *Kiosk) startWebServer() {
-	k.webServer = web.StartServer(k.logger, k.config)
+	k.webServer = web.StartServer(k.logger, k.config, k.natsClient)
 }
 
 func (k *Kiosk) awaitTermination() {
 	receiver := make(chan os.Signal)
-	signal.Notify(receiver, os.Interrupt)
+	signal.Notify(receiver, os.Interrupt, os.Kill)
 
 	<-receiver
 	k.logger.Debug("Received interrupt signal!")

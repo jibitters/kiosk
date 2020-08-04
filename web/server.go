@@ -6,18 +6,23 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jibitters/kiosk/web/handlers"
 	"github.com/lireza/lib/configuring"
+	nc "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
 
 const (
-	metrics = "/metrics"
+	v1       = "/v1"
+	echo     = "/echo"
+	tickets  = "/tickets"
+	comments = "/comments"
+	metrics  = "/metrics"
 )
 
 // StartServer setups and then runs an HTTP server.
-func StartServer(logger *zap.SugaredLogger, config *configuring.Config) *http.Server {
-
+func StartServer(logger *zap.SugaredLogger, config *configuring.Config, natsClient *nc.Conn) *http.Server {
 	host := config.Get("web.server.host").StringOrElse("localhost")
 	port := config.Get("web.server.port").UintOrElse(8080)
 	readTimeout := config.Get("web.server.read_timeout").DurationOrElse(5 * time.Second)
@@ -32,7 +37,7 @@ func StartServer(logger *zap.SugaredLogger, config *configuring.Config) *http.Se
 	logger.Debug("web.server.write_timeout -> ", writeTimeout)
 	logger.Debug("web.server.idle_timeout -> ", idleTimeout)
 
-	router := setupRoutes()
+	router := setupRoutes(logger, natsClient)
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf("%v:%v", host, port),
@@ -49,11 +54,29 @@ func StartServer(logger *zap.SugaredLogger, config *configuring.Config) *http.Se
 	return server
 }
 
-func setupRoutes() *mux.Router {
+func setupRoutes(logger *zap.SugaredLogger, natsClient *nc.Conn) *mux.Router {
 	// Router
 	router := mux.NewRouter().
+		PathPrefix(v1).
 		Methods(http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete).
 		Subrouter()
+
+	// Meddlers
+	meddlers := handlers.NewMeddlers()
+	router.Use(meddlers.JSONContentTypeHeaderMiddleware)
+
+	// Echo handler
+	echoHandler := handlers.NewEchoHandler(logger)
+	router.Methods(http.MethodPost).PathPrefix(echo).HandlerFunc(echoHandler.Echo())
+
+	// Ticket handler
+	ticketHandler := handlers.NewTicketHandler(logger, natsClient)
+	router.Methods(http.MethodPost).PathPrefix(tickets).HandlerFunc(ticketHandler.Create())
+	router.Methods(http.MethodGet).PathPrefix(tickets).HandlerFunc(ticketHandler.Filter())
+
+	// Comment handler
+	commentHandler := handlers.NewCommentHandler(logger, natsClient)
+	router.Methods(http.MethodPost).PathPrefix(comments).HandlerFunc(commentHandler.Create())
 
 	// Metrics handler
 	router.Handle(metrics, promhttp.Handler())
