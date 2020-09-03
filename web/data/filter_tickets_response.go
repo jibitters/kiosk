@@ -1,8 +1,6 @@
 package data
 
-import (
-	"github.com/jibitters/kiosk/models"
-)
+import "github.com/jibitters/kiosk/models"
 
 // FilterTicketsResponse model definition.
 type FilterTicketsResponse struct {
@@ -10,7 +8,7 @@ type FilterTicketsResponse struct {
 	HasNextPage bool              `json:"hasNextPage"`
 }
 
-// LoadFromTickets loads the fields of current model from provided tickets.
+// LoadFromTickets populates the fields of current model from provided tickets.
 func (r *FilterTicketsResponse) LoadFromTickets(tickets []*models.Ticket, HasNextPage bool) {
 	for _, t := range tickets {
 		ticketResponse := &TicketResponse{}

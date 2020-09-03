@@ -21,8 +21,7 @@ func NewEchoHandler(logger *zap.SugaredLogger) *EchoHandler {
 func (h *EchoHandler) Echo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		echoRequest := data.EchoRequest{}
-		ok := parse(h.logger, w, r, &echoRequest)
-		if !ok {
+		if ok := parse(h.logger, w, r, &echoRequest); !ok {
 			return
 		}
 

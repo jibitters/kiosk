@@ -25,17 +25,17 @@ const (
 func StartServer(logger *zap.SugaredLogger, config *configuring.Config, natsClient *nc.Conn) *http.Server {
 	host := config.Get("web.server.host").StringOrElse("localhost")
 	port := config.Get("web.server.port").UintOrElse(8080)
-	readTimeout := config.Get("web.server.read_timeout").DurationOrElse(5 * time.Second)
-	readHeaderTimeout := config.Get("web.server.read_header_timeout").DurationOrElse(2 * time.Second)
+	readTimeout := config.Get("web.server.read_timeout").DurationOrElse(10 * time.Second)
+	readHeaderTimeout := config.Get("web.server.read_header_timeout").DurationOrElse(5 * time.Second)
 	writeTimeout := config.Get("web.server.write_timeout").DurationOrElse(10 * time.Second)
 	idleTimeout := config.Get("web.server.idle_timeout").DurationOrElse(30 * time.Second)
 
-	logger.Debug("web.server.host -> ", host)
-	logger.Debug("web.server.port -> ", port)
-	logger.Debug("web.server.read_timeout -> ", readTimeout)
-	logger.Debug("web.server.read_header_timeout -> ", readHeaderTimeout)
-	logger.Debug("web.server.write_timeout -> ", writeTimeout)
-	logger.Debug("web.server.idle_timeout -> ", idleTimeout)
+	logger.Info("web.server.host -> ", host)
+	logger.Info("web.server.port -> ", port)
+	logger.Info("web.server.read_timeout -> ", readTimeout)
+	logger.Info("web.server.read_header_timeout -> ", readHeaderTimeout)
+	logger.Info("web.server.write_timeout -> ", writeTimeout)
+	logger.Info("web.server.idle_timeout -> ", idleTimeout)
 
 	router := setupRoutes(logger, natsClient)
 
