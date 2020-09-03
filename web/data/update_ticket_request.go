@@ -16,8 +16,16 @@ type UpdateTicketRequest struct {
 
 // Validate validates the request.
 func (r *UpdateTicketRequest) Validate() *errors.Type {
+	if r.ID <= 0 {
+		return errors.InvalidArgument("ID.invalid", "")
+	}
+
 	if len(r.Subject) == 0 {
 		return errors.InvalidArgument("subject.is_required", "")
+	}
+
+	if len(r.Subject) > 255 {
+		return errors.InvalidArgument("subject.invalid_length", "")
 	}
 
 	if r.ImportanceLevel != models.TicketImportanceLevelLow &&

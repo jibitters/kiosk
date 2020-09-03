@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/jibitters/kiosk/errors"
 	nc "github.com/nats-io/nats.go"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"net/http"
 )
 
 // CommentHandler is the handler implementation of comments related resource.
@@ -30,17 +31,18 @@ func (h *CommentHandler) Create() http.HandlerFunc {
 			if e == nc.ErrTimeout {
 				et := errors.RequestTimeout("")
 				writeError(w, et)
+			} else {
+				et := errors.InternalServerError("unknown", "")
+				h.logger.Error(et.FingerPrint, ": ", e.Error())
+				writeError(w, et)
 			}
 
-			et := errors.InternalServerError("unknown", "")
-			h.logger.Error(et.FingerPrint, ": ", e.Error())
-			writeError(w, et)
 			return
 		}
 
-		if string(response.Data) != "" {
-			et := &errors.Type{}
-			_ = json.Unmarshal(response.Data, et)
+		et := &errors.Type{}
+		_ = json.Unmarshal(response.Data, et)
+		if et.FingerPrint != "" {
 			writeError(w, et)
 			return
 		}

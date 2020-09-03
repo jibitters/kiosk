@@ -21,6 +21,31 @@ type FilterTicketsRequest struct {
 
 // Validate validates the request.
 func (r *FilterTicketsRequest) Validate() *errors.Type {
+	if len(r.Issuer) > 50 {
+		return errors.InvalidArgument("issuer.invalid_length", "")
+	}
+
+	if len(r.Owner) > 50 {
+		return errors.InvalidArgument("owner.invalid_length", "")
+	}
+
+	if r.ImportanceLevel != models.TicketImportanceLevelLow &&
+		r.ImportanceLevel != models.TicketImportanceLevelMedium &&
+		r.ImportanceLevel != models.TicketImportanceLevelHigh &&
+		r.ImportanceLevel != models.TicketImportanceLevelCritical {
+
+		return errors.InvalidArgument("importanceLevel.not_valid", "")
+	}
+
+	if r.Status != models.TicketStatusNew &&
+		r.Status != models.TicketStatusReplied &&
+		r.Status != models.TicketStatusResolved &&
+		r.Status != models.TicketStatusClosed &&
+		r.Status != models.TicketStatusBlocked {
+
+		return errors.InvalidArgument("status.not_valid", "")
+	}
+
 	if r.FromDate == "" {
 		r.FromDate = "2000-01-01T00:00:00Z"
 	}
@@ -33,7 +58,7 @@ func (r *FilterTicketsRequest) Validate() *errors.Type {
 		return errors.InvalidArgument("pageNumber.not_valid", "")
 	}
 
-	if r.PageSize < 1 {
+	if r.PageSize < 1 || r.PageSize > 25 {
 		return errors.InvalidArgument("pageSize.not_valid", "")
 	}
 

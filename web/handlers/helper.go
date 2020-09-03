@@ -13,17 +13,15 @@ func parse(logger *zap.SugaredLogger, w http.ResponseWriter, r *http.Request, t 
 	in, e := ioutil.ReadAll(r.Body)
 	if e != nil {
 		et := errors.InternalServerError("unknown", "")
-		logger.Error(et.FingerPrint, ": Could not read request body!")
+		logger.Error(et.FingerPrint, ": ", e.Error())
 
 		writeError(w, et)
 		return false
 	}
 
-	e = json.Unmarshal(in, t)
-	if e != nil {
+	if e = json.Unmarshal(in, t); e != nil {
 		et := errors.InvalidRequestBody()
-		logger.Error(et.FingerPrint, ": Could not parse json!")
-		logger.Debug(et.FingerPrint, ": Raw body -> ", string(in))
+		logger.Warn(et.FingerPrint, ": Could not parse json: ", string(in))
 
 		writeError(w, et)
 		return false

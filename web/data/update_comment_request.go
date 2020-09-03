@@ -13,6 +13,9 @@ type UpdateCommentRequest struct {
 
 // Validate validates the request.
 func (r *UpdateCommentRequest) Validate() *errors.Type {
+	if r.ID <= 0 {
+		return errors.InvalidArgument("ID.invalid", "")
+	}
 
 	return nil
 }

@@ -21,7 +21,7 @@ type TicketResponse struct {
 	ModifiedAt      string                       `json:"modifiedAt"`
 }
 
-// LoadFromTicket loads the fields of current model from provided ticket.
+// LoadFromTicket populates the fields of current model from provided ticket.
 func (r *TicketResponse) LoadFromTicket(ticket *models.Ticket) {
 	r.ID = ticket.ID
 	r.Issuer = ticket.Issuer
@@ -53,7 +53,7 @@ type CommentResponse struct {
 	ModifiedAt string `json:"modifiedAt"`
 }
 
-// LoadFromComment loads the fields of current model from provided comment.
+// LoadFromComment populates the fields of current model from provided comment.
 func (r *CommentResponse) LoadFromComment(comment *models.Comment) {
 	r.ID = comment.ID
 	r.TicketID = comment.TicketID

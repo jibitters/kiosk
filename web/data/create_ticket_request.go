@@ -21,16 +21,32 @@ func (r *CreateTicketRequest) Validate() *errors.Type {
 		return errors.InvalidArgument("issuer.is_required", "")
 	}
 
+	if len(r.Issuer) > 50 {
+		return errors.InvalidArgument("issuer.invalid_length", "")
+	}
+
 	if len(r.Owner) == 0 {
 		return errors.InvalidArgument("owner.is_required", "")
+	}
+
+	if len(r.Owner) > 50 {
+		return errors.InvalidArgument("owner.invalid_length", "")
 	}
 
 	if len(r.Subject) == 0 {
 		return errors.InvalidArgument("subject.is_required", "")
 	}
 
+	if len(r.Subject) > 255 {
+		return errors.InvalidArgument("subject.invalid_length", "")
+	}
+
 	if len(r.Content) == 0 {
 		return errors.InvalidArgument("content.is_required", "")
+	}
+
+	if len(r.Content) > 5000 {
+		return errors.InvalidArgument("content.invalid_length", "")
 	}
 
 	if r.ImportanceLevel != models.TicketImportanceLevelLow &&
