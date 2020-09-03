@@ -40,3 +40,6 @@ To build a docker image (Images also available on [Docker Hub](https://hub.docke
 `./kiosk-linux-[version] --config path/to/kiosk.json` starts the project, easily!
 
 See `configs/kiosk.json` for an example configuration.
+
+## Prometheus exporter
+This project has prometheus metrics exporter that can be scraped by any prometheus server instance on `/v1/metrics` endpoint.
