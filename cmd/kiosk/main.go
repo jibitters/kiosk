@@ -23,10 +23,11 @@ var config = flag.String("config", "./configs/kiosk.json", "configuration file")
 
 // Kiosk is the main program encapsulation that holds all required components.
 type Kiosk struct {
-	logger         *zap.SugaredLogger
-	config         *configuring.Config
-	db             *pgxpool.Pool
-	natsClient     *nc.Conn
+	logger     *zap.SugaredLogger
+	config     *configuring.Config
+	db         *pgxpool.Pool
+	natsClient *nc.Conn
+	// TODO: Should we use interface for service layer components?
 	ticketService  *services.TicketService
 	commentService *services.CommentService
 	webServer      *http.Server
@@ -42,6 +43,7 @@ func main() {
 	kiosk.startTicketService()
 	kiosk.startCommentService()
 	kiosk.startWebServer()
+
 	kiosk.awaitTermination()
 }
 
@@ -60,7 +62,7 @@ func (k *Kiosk) configure() {
 	}
 
 	environment := k.config.Get("logger.environment").StringOrElse("DEVELOPMENT")
-	k.logger.Debug("logger.environment -> ", environment)
+	k.logger.Info("logger.environment -> ", environment)
 
 	if environment == "PRODUCTION" {
 		logger, _ := zap.NewProduction()
@@ -87,7 +89,7 @@ func (k *Kiosk) migrateDatabase() {
 
 func (k *Kiosk) prepareNatsClient() {
 	addresses := k.config.Get("nats.addresses").SliceOfStringOrElse([]string{"nats://localhost:4222"})
-	k.logger.Debug("nats.addresses -> ", addresses)
+	k.logger.Info("nats.addresses -> ", addresses)
 
 	client, e := nc.Connect(strings.Join(addresses, ","), nc.Name("Kiosk"))
 	if e != nil {

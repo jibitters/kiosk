@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// ConnectToDatabase connects to a postgres instance listening on port and then runs database migration.
+// ConnectToDatabase connects to a postgres instance listening on provided host and port and then runs migration.
 func ConnectToDatabase(host string, port int) (*pgxpool.Pool, error) {
 	config := configuring.New()
 
@@ -29,11 +29,9 @@ func ConnectToDatabase(host string, port int) (*pgxpool.Pool, error) {
 	defer func() { _ = file.Close() }()
 
 	_, _ = file.WriteString(first)
-	_ = os.Setenv("DB_POSTGRES_CONNECTION_STRING",
-		fmt.Sprintf("postgres://user:password@%v:%v/kiosk?sslmode=disable", host, port))
-
-	_ = os.Setenv("DB_POSTGRES_MIGRATION_DIRECTORY",
-		"file://"+filepath.Dir(file.Name()))
+	cs := fmt.Sprintf("postgres://user:password@%v:%v/kiosk?sslmode=disable", host, port)
+	_ = os.Setenv("DB_POSTGRES_CONNECTION_STRING", cs)
+	_ = os.Setenv("DB_POSTGRES_MIGRATION_DIRECTORY", "file://"+filepath.Dir(file.Name()))
 
 	if e := postgres.Migrate(zap.S(), config); e != nil {
 		return nil, e

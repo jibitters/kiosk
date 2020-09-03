@@ -20,8 +20,8 @@
     "server": {
       "host": "localhost",
       "port": "8080",
-      "read_timeout": "5s",
-      "read_header_timeout": "2s",
+      "read_timeout": "10s",
+      "read_header_timeout": "5s",
       "write_timeout": "10s",
       "idle_timeout": "30s"
     }
