@@ -16,8 +16,8 @@ import (
 // TicketService is a service implementation of ticket related functionalities.
 type TicketService struct {
 	logger           *zap.SugaredLogger
-	natsClient       *nc.Conn
 	ticketRepository *models.TicketRepository
+	natsClient       *nc.Conn
 	stop             chan struct{}
 }
 
@@ -25,13 +25,13 @@ type TicketService struct {
 func NewTicketService(logger *zap.SugaredLogger, db *pgxpool.Pool, natsClient *nc.Conn) *TicketService {
 	return &TicketService{
 		logger:           logger,
-		natsClient:       natsClient,
 		ticketRepository: models.NewTicketRepository(logger, db),
+		natsClient:       natsClient,
 		stop:             make(chan struct{}),
 	}
 }
 
-// Start starts the subscription so ready to be notified.
+// Start starts the subscriptions so ready to be notified.
 func (s *TicketService) Start() error {
 	createTicketSubscription, e := s.natsClient.QueueSubscribe("kiosk.tickets.create",
 		"kiosk.tickets.create_group", s.createTicket)
@@ -79,7 +79,7 @@ func (s *TicketService) await(ss ...*nc.Subscription) {
 }
 
 func (s *TicketService) createTicket(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	createTicketRequest := &data.CreateTicketRequest{}
@@ -102,7 +102,7 @@ func (s *TicketService) createTicket(msg *nc.Msg) {
 }
 
 func (s *TicketService) loadTicket(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	id := &data.ID{}
@@ -123,7 +123,7 @@ func (s *TicketService) loadTicket(msg *nc.Msg) {
 }
 
 func (s *TicketService) updateTicket(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	updateTicketRequest := &data.UpdateTicketRequest{}
@@ -146,7 +146,7 @@ func (s *TicketService) updateTicket(msg *nc.Msg) {
 }
 
 func (s *TicketService) deleteTicket(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	id := &data.ID{}
@@ -164,7 +164,7 @@ func (s *TicketService) deleteTicket(msg *nc.Msg) {
 }
 
 func (s *TicketService) filterTickets(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	filterTicketsRequest := &data.FilterTicketsRequest{}
@@ -181,7 +181,6 @@ func (s *TicketService) filterTickets(msg *nc.Msg) {
 	ts, hasNextPage, e := s.ticketRepository.Filter(ctx, filterTicketsRequest.Issuer, filterTicketsRequest.Owner,
 		filterTicketsRequest.ImportanceLevel, filterTicketsRequest.Status, filterTicketsRequest.FromDate,
 		filterTicketsRequest.ToDate, filterTicketsRequest.PageNumber, filterTicketsRequest.PageSize)
-
 	if e != nil {
 		s.reply(msg, e)
 		return
@@ -201,7 +200,7 @@ func (s *TicketService) replyNoContent(msg *nc.Msg) {
 	_ = msg.Respond([]byte(""))
 }
 
-// Stop stops the component and it subscription.
+// Stop stops the component and it subscriptions.
 func (s *TicketService) Stop() {
 	s.stop <- struct{}{}
 }

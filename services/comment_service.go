@@ -16,8 +16,8 @@ import (
 // CommentService is a service implementation of comment related functionalities.
 type CommentService struct {
 	logger            *zap.SugaredLogger
-	natsClient        *nc.Conn
 	commentRepository *models.CommentRepository
+	natsClient        *nc.Conn
 	stop              chan struct{}
 }
 
@@ -25,13 +25,13 @@ type CommentService struct {
 func NewCommentService(logger *zap.SugaredLogger, db *pgxpool.Pool, natsClient *nc.Conn) *CommentService {
 	return &CommentService{
 		logger:            logger,
-		natsClient:        natsClient,
 		commentRepository: models.NewCommentRepository(logger, db),
+		natsClient:        natsClient,
 		stop:              make(chan struct{}),
 	}
 }
 
-// Start starts the subscription so ready to be notified.
+// Start starts the subscriptions so ready to be notified.
 func (s *CommentService) Start() error {
 	createCommentSubscription, e := s.natsClient.QueueSubscribe("kiosk.comments.create",
 		"kiosk.comments.create_group", s.createComment)
@@ -72,7 +72,7 @@ func (s *CommentService) await(ss ...*nc.Subscription) {
 }
 
 func (s *CommentService) createComment(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	createCommentRequest := &data.CreateCommentRequest{}
@@ -95,7 +95,7 @@ func (s *CommentService) createComment(msg *nc.Msg) {
 }
 
 func (s *CommentService) loadComment(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	id := &data.ID{}
@@ -116,7 +116,7 @@ func (s *CommentService) loadComment(msg *nc.Msg) {
 }
 
 func (s *CommentService) updateComment(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	updateCommentRequest := &data.UpdateCommentRequest{}
@@ -139,7 +139,7 @@ func (s *CommentService) updateComment(msg *nc.Msg) {
 }
 
 func (s *CommentService) deleteComment(msg *nc.Msg) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	id := &data.ID{}
@@ -165,7 +165,7 @@ func (s *CommentService) replyNoContent(msg *nc.Msg) {
 	_ = msg.Respond([]byte(""))
 }
 
-// Stop stops the component and it subscription.
+// Stop stops the component and it subscriptions.
 func (s *CommentService) Stop() {
 	s.stop <- struct{}{}
 }
