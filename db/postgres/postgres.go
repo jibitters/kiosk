@@ -24,9 +24,9 @@ func Connect(logger *zap.SugaredLogger, config *configuring.Config) (*pgxpool.Po
 		StringOrElse("file://migration/postgres")
 
 	logger.Debug("db.postgres.connection_string -> ", connectionString)
-	logger.Debug("db.postgres.pool_min_connections -> ", minPoolConnections)
-	logger.Debug("db.postgres.pool_max_connections -> ", maxPoolConnections)
-	logger.Debug("db.postgres.migration_directory -> ", migrationDirectory)
+	logger.Info("db.postgres.pool_min_connections -> ", minPoolConnections)
+	logger.Info("db.postgres.pool_max_connections -> ", maxPoolConnections)
+	logger.Info("db.postgres.migration_directory -> ", migrationDirectory)
 
 	dbConfig, e := pgxpool.ParseConfig(connectionString)
 	if e != nil {

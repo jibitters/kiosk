@@ -39,27 +39,11 @@ func NewTicketRepository(logger *zap.SugaredLogger, db *pgxpool.Pool) *TicketRep
 
 // Insert tries to insert a ticket into tickets table.
 func (r *TicketRepository) Insert(ctx context.Context, ticket Ticket) *errors.Type {
-	q := `INSERT INTO tickets (
-			issuer,
-			owner,
-			subject,
-			content,
-			metadata,
-			importance_level,
-			status,
-			created_at,
+	q := `INSERT INTO tickets (issuer, owner, subject, content, metadata, importance_level, status, created_at,
 			modified_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW());`
 
-	_, e := r.db.Exec(ctx, q,
-		ticket.Issuer,
-		ticket.Owner,
-		ticket.Subject,
-		ticket.Content,
-		ticket.Metadata,
-		ticket.ImportanceLevel,
-		TicketStatusNew,
-	)
-
+	_, e := r.db.Exec(ctx, q, ticket.Issuer, ticket.Owner, ticket.Subject, ticket.Content, ticket.Metadata,
+		ticket.ImportanceLevel, TicketStatusNew)
 	if e != nil {
 		et := errors.InternalServerError("unknown", "")
 		r.logger.Error(et.FingerPrint, ": ", e.Error())
@@ -69,28 +53,13 @@ func (r *TicketRepository) Insert(ctx context.Context, ticket Ticket) *errors.Ty
 	return nil
 }
 
-// LoadByID tries to load a ticket from tickets table.
+// LoadByID tries to load a ticket and its comments from tickets table.
 func (r *TicketRepository) LoadByID(ctx context.Context, id int64) (*Ticket, *errors.Type) {
-	q := `SELECT
-			id,
-			issuer,
-			owner,
-			subject,
-			content,
-			metadata,
-			importance_level,
-			status,
-			created_at,
-			modified_at FROM tickets WHERE id = $1;`
+	q := `SELECT id, issuer, owner, subject, content, metadata, importance_level, status, created_at, modified_at
+			FROM tickets WHERE id = $1;`
 
-	commentsQ := `SELECT
-					id,
-					ticket_id,
-					owner,
-					content,
-					metadata,
-					created_at,
-					modified_at FROM comments WHERE ticket_id = $1 ORDER BY created_at DESC;`
+	commentsQ := `SELECT id, ticket_id, owner, content, metadata, created_at, modified_at FROM comments WHERE
+					ticket_id = $1 ORDER BY created_at DESC;`
 
 	batch := &pgx.Batch{}
 	batch.Queue(q, id)
@@ -103,19 +72,8 @@ func (r *TicketRepository) LoadByID(ctx context.Context, id int64) (*Ticket, *er
 	var metadata sql.NullString
 
 	row := results.QueryRow()
-	e := row.Scan(
-		&ticket.ID,
-		&ticket.Issuer,
-		&ticket.Owner,
-		&ticket.Subject,
-		&ticket.Content,
-		&metadata,
-		&ticket.ImportanceLevel,
-		&ticket.Status,
-		&ticket.CreatedAt,
-		&ticket.ModifiedAt,
-	)
-
+	e := row.Scan(&ticket.ID, &ticket.Issuer, &ticket.Owner, &ticket.Subject, &ticket.Content, &metadata,
+		&ticket.ImportanceLevel, &ticket.Status, &ticket.CreatedAt, &ticket.ModifiedAt)
 	if e != nil {
 		if e == pgx.ErrNoRows {
 			return nil, errors.NotFound("ticket.not_found", "")
@@ -142,15 +100,8 @@ func (r *TicketRepository) LoadByID(ctx context.Context, id int64) (*Ticket, *er
 		comment := &Comment{}
 		var metadata sql.NullString
 
-		e := rows.Scan(
-			&comment.ID,
-			&comment.TicketID,
-			&comment.Owner,
-			&comment.Content,
-			&metadata,
-			&comment.CreatedAt,
-			&comment.ModifiedAt,
-		)
+		e := rows.Scan(&comment.ID, &comment.TicketID, &comment.Owner, &comment.Content, &metadata, &comment.CreatedAt,
+			&comment.ModifiedAt)
 		if e != nil {
 			et := errors.InternalServerError("unknown", "")
 			r.logger.Error(et.FingerPrint, ": ", e.Error())
@@ -169,22 +120,10 @@ func (r *TicketRepository) LoadByID(ctx context.Context, id int64) (*Ticket, *er
 
 // Update tries to update a ticket record.
 func (r *TicketRepository) Update(ctx context.Context, ticket *Ticket) *errors.Type {
-	q := `UPDATE tickets
-			SET subject = $1,
-				metadata = $2,
-				importance_level = $3,
-				status = $4,
-				modified_at = NOW()
+	q := `UPDATE tickets SET subject = $1, metadata = $2, importance_level = $3, status = $4, modified_at = NOW()
 			WHERE id = $5;`
 
-	command, e := r.db.Exec(ctx, q,
-		ticket.Subject,
-		ticket.Metadata,
-		ticket.ImportanceLevel,
-		ticket.Status,
-		ticket.ID,
-	)
-
+	command, e := r.db.Exec(ctx, q, ticket.Subject, ticket.Metadata, ticket.ImportanceLevel, ticket.Status, ticket.ID)
 	if e != nil {
 		et := errors.InternalServerError("unknown", "")
 		r.logger.Error(et.FingerPrint, ": ", e.Error())
@@ -222,12 +161,12 @@ func (r *TicketRepository) DeleteByID(ctx context.Context, id int64) *errors.Typ
 	return nil
 }
 
-// Filter tries to filter tickets.
+// Filter tries to filter tickets. If there is another page of result when loading tickets, the second returned value
+// will be true, otherwise false.
 func (r *TicketRepository) Filter(ctx context.Context, issuer, owner string, importanceLevel TicketImportanceLevel,
 	status TicketStatus, fromDate, toDate string, pageNumber, pageSize int) ([]*Ticket, bool, *errors.Type) {
 
 	q, args := r.buildFilterQuery(issuer, owner, importanceLevel, status, fromDate, toDate, pageNumber, pageSize)
-
 	rows, e := r.db.Query(ctx, q, args...)
 	if e != nil {
 		et := errors.InternalServerError("unknown", "")
@@ -242,18 +181,8 @@ func (r *TicketRepository) Filter(ctx context.Context, issuer, owner string, imp
 		ticket := &Ticket{}
 		var metadata sql.NullString
 
-		e := rows.Scan(
-			&ticket.ID,
-			&ticket.Issuer,
-			&ticket.Owner,
-			&ticket.Subject,
-			&ticket.Content,
-			&metadata,
-			&ticket.ImportanceLevel,
-			&ticket.Status,
-			&ticket.CreatedAt,
-			&ticket.ModifiedAt,
-		)
+		e := rows.Scan(&ticket.ID, &ticket.Issuer, &ticket.Owner, &ticket.Subject, &ticket.Content, &metadata,
+			&ticket.ImportanceLevel, &ticket.Status, &ticket.CreatedAt, &ticket.ModifiedAt)
 		if e != nil {
 			et := errors.InternalServerError("unknown", "")
 			r.logger.Error(et.FingerPrint, ": ", e.Error())
@@ -288,15 +217,8 @@ func (r *TicketRepository) Filter(ctx context.Context, issuer, owner string, imp
 			comment := &Comment{}
 			var metadata sql.NullString
 
-			e := rows.Scan(
-				&comment.ID,
-				&comment.TicketID,
-				&comment.Owner,
-				&comment.Content,
-				&metadata,
-				&comment.CreatedAt,
-				&comment.ModifiedAt,
-			)
+			e := rows.Scan(&comment.ID, &comment.TicketID, &comment.Owner, &comment.Content, &metadata,
+				&comment.CreatedAt, &comment.ModifiedAt)
 			if e != nil {
 				et := errors.InternalServerError("unknown", "")
 				r.logger.Error(et.FingerPrint, ": ", e.Error())
@@ -346,16 +268,7 @@ func (r *TicketRepository) buildFilterQuery(issuer, owner string, importanceLeve
 	args := make([]interface{}, 0)
 	q := strings.Builder{}
 
-	q.WriteString(`SELECT
-						id,
-						issuer,
-						owner,
-						subject,
-						content,
-						metadata,
-						importance_level,
-						status,
-						created_at,
+	q.WriteString(`SELECT id, issuer, owner, subject, content, metadata, importance_level, status, created_at,
 						modified_at FROM tickets WHERE`)
 
 	counter := 0
@@ -406,14 +319,8 @@ func (r *TicketRepository) buildLoadCommentsQuery(tickets []*Ticket) (string, []
 	q := strings.Builder{}
 	args := make([]interface{}, 0)
 
-	q.WriteString(`SELECT
-			id,
-			ticket_id,
-			owner,
-			content,
-			metadata,
-			created_at,
-			modified_at FROM comments WHERE ticket_id IN (`)
+	q.WriteString(`SELECT id, ticket_id, owner, content, metadata, created_at, modified_at FROM comments WHERE
+						ticket_id IN (`)
 
 	counter := 0
 	for _, t := range tickets {
@@ -427,7 +334,7 @@ func (r *TicketRepository) buildLoadCommentsQuery(tickets []*Ticket) (string, []
 		args = append(args, t.ID)
 	}
 
-	q.WriteString(`) ORDER BY created_at DESC`)
+	q.WriteString(`) ORDER BY created_at DESC;`)
 
 	return q.String(), args
 }

@@ -5,17 +5,17 @@ VERSION=$(find kiosk-linux-* | sed -E 's/kiosk-linux-v//')
 
 IMAGE_NAME=jibitters/kiosk
 case $TRAVIS_BRANCH in
-	master)
-	  IMAGE_TAG=$VERSION
-		;;
+  master)
+    IMAGE_TAG=$VERSION
+    ;;
 
-	develop)
-		IMAGE_TAG=$VERSION-INTEGRATION
-		;;
+  develop)
+    IMAGE_TAG=$VERSION-INTEGRATION
+    ;;
 
-	*)
-		IMAGE_TAG=$VERSION-DEVELOPMENT
-		;;
+  *)
+    IMAGE_TAG=$VERSION-DEVELOPMENT
+    ;;
 esac
 
 echo "About to build the $IMAGE_NAME:$IMAGE_TAG image"
