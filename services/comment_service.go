@@ -34,25 +34,25 @@ func NewCommentService(logger *zap.SugaredLogger, db *pgxpool.Pool, natsClient *
 // Start starts the subscriptions so ready to be notified.
 func (s *CommentService) Start() error {
 	createCommentSubscription, e := s.natsClient.QueueSubscribe("kiosk.comments.create",
-		"kiosk.comments.create_group", s.createComment)
+		"kiosk.comments.create_group", s.create)
 	if e != nil {
 		return e
 	}
 
 	loadCommentSubscription, e := s.natsClient.QueueSubscribe("kiosk.comments.load",
-		"kiosk.comments.load_group", s.loadComment)
+		"kiosk.comments.load_group", s.load)
 	if e != nil {
 		return e
 	}
 
 	updateCommentSubscription, e := s.natsClient.QueueSubscribe("kiosk.comments.update",
-		"kiosk.comments.update_group", s.updateComment)
+		"kiosk.comments.update_group", s.update)
 	if e != nil {
 		return e
 	}
 
 	deleteCommentSubscription, e := s.natsClient.QueueSubscribe("kiosk.comments.delete",
-		"kiosk.comments.delete_group", s.deleteComment)
+		"kiosk.comments.delete_group", s.delete)
 	if e != nil {
 		return e
 	}
@@ -71,7 +71,7 @@ func (s *CommentService) await(ss ...*nc.Subscription) {
 	}
 }
 
-func (s *CommentService) createComment(msg *nc.Msg) {
+func (s *CommentService) create(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -94,7 +94,7 @@ func (s *CommentService) createComment(msg *nc.Msg) {
 	s.replyNoContent(msg)
 }
 
-func (s *CommentService) loadComment(msg *nc.Msg) {
+func (s *CommentService) load(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -115,7 +115,7 @@ func (s *CommentService) loadComment(msg *nc.Msg) {
 	s.reply(msg, commentResponse)
 }
 
-func (s *CommentService) updateComment(msg *nc.Msg) {
+func (s *CommentService) update(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -138,7 +138,7 @@ func (s *CommentService) updateComment(msg *nc.Msg) {
 	s.replyNoContent(msg)
 }
 
-func (s *CommentService) deleteComment(msg *nc.Msg) {
+func (s *CommentService) delete(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
