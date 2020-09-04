@@ -34,31 +34,31 @@ func NewTicketService(logger *zap.SugaredLogger, db *pgxpool.Pool, natsClient *n
 // Start starts the subscriptions so ready to be notified.
 func (s *TicketService) Start() error {
 	createTicketSubscription, e := s.natsClient.QueueSubscribe("kiosk.tickets.create",
-		"kiosk.tickets.create_group", s.createTicket)
+		"kiosk.tickets.create_group", s.create)
 	if e != nil {
 		return e
 	}
 
 	loadTicketSubscription, e := s.natsClient.QueueSubscribe("kiosk.tickets.load",
-		"kiosk.tickets.load_group", s.loadTicket)
+		"kiosk.tickets.load_group", s.load)
 	if e != nil {
 		return e
 	}
 
 	updateTicketSubscription, e := s.natsClient.QueueSubscribe("kiosk.tickets.update",
-		"kiosk.tickets.update_group", s.updateTicket)
+		"kiosk.tickets.update_group", s.update)
 	if e != nil {
 		return e
 	}
 
 	deleteTicketSubscription, e := s.natsClient.QueueSubscribe("kiosk.tickets.delete",
-		"kiosk.tickets.delete_group", s.deleteTicket)
+		"kiosk.tickets.delete_group", s.delete)
 	if e != nil {
 		return e
 	}
 
 	filterTicketsSubscription, e := s.natsClient.QueueSubscribe("kiosk.tickets.filter",
-		"kiosk.tickets.filter_group", s.filterTickets)
+		"kiosk.tickets.filter_group", s.filter)
 	if e != nil {
 		return e
 	}
@@ -78,7 +78,7 @@ func (s *TicketService) await(ss ...*nc.Subscription) {
 	}
 }
 
-func (s *TicketService) createTicket(msg *nc.Msg) {
+func (s *TicketService) create(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -101,7 +101,7 @@ func (s *TicketService) createTicket(msg *nc.Msg) {
 	s.replyNoContent(msg)
 }
 
-func (s *TicketService) loadTicket(msg *nc.Msg) {
+func (s *TicketService) load(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -122,7 +122,7 @@ func (s *TicketService) loadTicket(msg *nc.Msg) {
 	s.reply(msg, ticketResponse)
 }
 
-func (s *TicketService) updateTicket(msg *nc.Msg) {
+func (s *TicketService) update(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -145,7 +145,7 @@ func (s *TicketService) updateTicket(msg *nc.Msg) {
 	s.replyNoContent(msg)
 }
 
-func (s *TicketService) deleteTicket(msg *nc.Msg) {
+func (s *TicketService) delete(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -163,7 +163,7 @@ func (s *TicketService) deleteTicket(msg *nc.Msg) {
 	s.replyNoContent(msg)
 }
 
-func (s *TicketService) filterTickets(msg *nc.Msg) {
+func (s *TicketService) filter(msg *nc.Msg) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
