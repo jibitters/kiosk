@@ -16,7 +16,7 @@ The requirements to test and build the project are as follows:
 
 |Requirement    |Version|
 |---            |---    |
-|go             |1.14   |
+|go             |1.15   |
 |postgres       |11     |
 |nats           |2.1    |
 
